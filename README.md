@@ -124,6 +124,8 @@ Abra <http://localhost:3000>.
 | `npm run db:generate` | Gera as migrations a partir do schema |
 | `npm run db:migrate` | Aplica as migrations |
 | `npm run admin:hash` | Gera o hash da senha do painel |
+| `npm run docs:quiz` | Regera `docs/PERGUNTAS-E-RESPOSTAS.md` a partir do conteúdo |
+| `npm run audit:quiz` | Simula respostas e mede o equilíbrio entre áreas e cargos |
 
 ---
 
@@ -176,6 +178,13 @@ componentes.
 | [`results.ts`](src/content/results.ts) | Os 16 resultados: título, resumo, habilidades, “na prática”, formações |
 | [`collaborators.ts`](src/content/collaborators.ts) | Colaboradores reais |
 | [`types.ts`](src/content/types.ts) | Tipos compartilhados |
+
+### Referência completa das perguntas
+
+[`docs/PERGUNTAS-E-RESPOSTAS.md`](docs/PERGUNTAS-E-RESPOSTAS.md) lista as 10
+perguntas, todas as alternativas e para onde cada uma aponta — organizado por
+área. O arquivo é **gerado**, não escrito à mão: depois de editar o conteúdo,
+rode `npm run docs:quiz` para atualizá-lo.
 
 ### Alterar uma pergunta
 
