@@ -11,10 +11,12 @@ import type { IconName } from '@/content/types';
 const paths: Record<IconName, React.ReactNode> = {
   handshake: (
     <>
-      <path d="M11 6 8.5 8.5a2 2 0 0 0 0 2.8l.2.2a2 2 0 0 0 2.8 0L13 9.5l3.5 3.5" />
-      <path d="M3 8h3l3-2h6l3 2h3" />
-      <path d="M13 9.5 16 12.5l2 2 2-2V8" />
-      <path d="M6 8v6l2 2" />
+      {/* Duas mãos se apertando: cada braço entra por um lado e as mãos se
+          cruzam no centro. O par de traços diagonais é o antebraço. */}
+      <path d="m12 13.2-2.6-2.6a2 2 0 0 0-2.8 2.8l3.6 3.6a2 2 0 0 0 2.8 0" />
+      <path d="m12 12.4 3 3a2 2 0 0 0 2.8-2.8l-3.6-3.6a2 2 0 0 0-2.8 0l-1 1" />
+      <path d="M3 8.5h3.5L9 6" />
+      <path d="M21 8.5h-3.5L15 6" />
     </>
   ),
   lightbulb: (
@@ -26,10 +28,12 @@ const paths: Record<IconName, React.ReactNode> = {
   ),
   users: (
     <>
-      <circle cx="9" cy="8" r="3" />
-      <path d="M3 20a6 6 0 0 1 12 0" />
-      <path d="M16 5.5a3 3 0 0 1 0 5.9" />
-      <path d="M17.5 14.2A6 6 0 0 1 21 20" />
+      {/* Duas pessoas completas: a de trás é menor e desenhada por inteiro,
+          em vez de um arco solto que parecia um traço perdido. */}
+      <circle cx="8.5" cy="8" r="3" />
+      <path d="M3 19.5a5.5 5.5 0 0 1 11 0" />
+      <circle cx="17" cy="9.5" r="2.2" />
+      <path d="M16 13.8a4.2 4.2 0 0 1 5 4.1" />
     </>
   ),
   chart: (
@@ -119,9 +123,10 @@ const paths: Record<IconName, React.ReactNode> = {
   factory: (
     <>
       <path d="M3 20V11l5 3V11l5 3V8l6 3.5V20z" />
-      <path d="M3 20h18" />
+      <path d="M2 20h20" />
       <path d="M6 4h3l.5 5h-4z" />
-      <path d="M16 16h2" />
+      {/* Janelas alinhadas dentro do galpão, no lugar do traço solto. */}
+      <path d="M6.2 17h1.6M11.2 17h1.6M16.2 17h1.6" />
     </>
   ),
   gear: (

@@ -25,7 +25,11 @@ export interface ActionState {
   success?: string;
 }
 
-const LOGIN_RATE_LIMIT = { limit: 6, windowMs: 5 * 60_000 };
+/**
+ * Limite folgado o bastante para não atrapalhar quem está configurando o
+ * painel, e apertado o bastante para inviabilizar força bruta na senha.
+ */
+const LOGIN_RATE_LIMIT = { limit: 20, windowMs: 5 * 60_000 };
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
   if (!isAdminConfigured()) {
@@ -36,12 +40,11 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   }
 
   const requestHeaders = await headers();
-  // Limite de tentativas removido temporariamente para facilitar o login
-  // const limit = rateLimit(clientKey(requestHeaders, 'admin-login'), LOGIN_RATE_LIMIT);
-  // if (!limit.allowed) {
-  //   logServerEvent('admin_login_rate_limited');
-  //   return { error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
-  // }
+  const limit = rateLimit(clientKey(requestHeaders, 'admin-login'), LOGIN_RATE_LIMIT);
+  if (!limit.allowed) {
+    logServerEvent('admin_login_rate_limited');
+    return { error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
+  }
 
   const password = formData.get('password');
   if (typeof password !== 'string' || password.length === 0) {

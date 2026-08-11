@@ -71,6 +71,10 @@ export function PhotoFrame({
           aria-label={alt}
           data-photo-placeholder="true"
         >
+          {/* Planificação de uma caixa: contorno sólido é a faca de corte,
+              tracejado são os vincos, e o verde marca os cantos. Tudo cabe no
+              terço central, então sobrevive ao recorte em qualquer proporção —
+              de 21:9 na foto da equipe a 3:4 no retrato do colaborador. */}
           <svg
             viewBox="0 0 400 300"
             className="h-full w-full"
@@ -79,23 +83,34 @@ export function PhotoFrame({
           >
             <defs>
               <linearGradient id="pf-paper" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#f4f5f5" />
+                <stop offset="0%" stopColor="#f6f7f7" />
                 <stop offset="100%" stopColor="#dcdedf" />
               </linearGradient>
             </defs>
             <rect width="400" height="300" fill="url(#pf-paper)" />
-            {/* Dobras de embalagem */}
-            <path d="M0 210 L120 150 L260 220 L400 160 L400 300 L0 300 Z" fill="#cfd2d3" />
-            <path d="M120 150 L260 220 L260 300 L120 300 Z" fill="#c3c7c8" opacity="0.7" />
-            {/* Faca de corte */}
+
             <path
-              d="M40 60 H360 V240 H40 Z"
-              fill="none"
+              d="M140 95 H260 V115 H290 V185 H260 V205 H140 V185 H110 V115 H140 Z"
+              fill="#ffffff"
+              fillOpacity="0.55"
               stroke="#9a9c9e"
-              strokeWidth="1.5"
-              strokeDasharray="9 7"
+              strokeWidth="1.6"
+              strokeLinejoin="round"
             />
-            <path d="M40 60 L90 20 M360 60 L310 20" stroke="#b4d334" strokeWidth="3" />
+
+            <g stroke="#b0b3b4" strokeWidth="1.2" strokeDasharray="7 6">
+              <path d="M110 115 H290" />
+              <path d="M110 185 H290" />
+              <path d="M140 95 V205" />
+              <path d="M260 95 V205" />
+            </g>
+
+            <g stroke="#b4d334" strokeWidth="2.4" fill="none" strokeLinecap="round">
+              <path d="M101 95 H110 V86" />
+              <path d="M299 95 H290 V86" />
+              <path d="M101 205 H110 V214" />
+              <path d="M299 205 H290 V214" />
+            </g>
           </svg>
           <span className="absolute bottom-3 left-3 rounded-full bg-white/85 px-3 py-1 text-[11px] font-medium text-nicopel-gray-text">
             {placeholderLabel}

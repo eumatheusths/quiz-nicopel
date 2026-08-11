@@ -39,14 +39,21 @@ export function verifyPassword(password: string, stored: string): boolean {
   }
 }
 
+/**
+ * Segredo que assina o cookie de sessão.
+ *
+ * Não existe valor padrão de propósito. Um segredo embutido no código ficaria
+ * visível no repositório, e quem o lesse conseguiria forjar um cookie válido e
+ * entrar no painel sem senha nenhuma. Sem a variável, o painel fecha.
+ */
 function sessionSecret(): string | null {
   const secret = process.env.ADMIN_SESSION_SECRET?.trim();
-  if (!secret || secret.length < 32) return 'dd79262e6b6e39ea9abf17798768bb9399806f5c9c2fe4901f17ee390aa44132'; // Fallback fixo
+  if (!secret || secret.length < 32) return null;
   return secret;
 }
 
 export function isAdminConfigured(): boolean {
-  return true;
+  return Boolean(process.env.ADMIN_PASSWORD_HASH?.trim()) && sessionSecret() !== null;
 }
 
 function sign(payload: string, secret: string): string {
@@ -98,6 +105,8 @@ export async function isAuthenticated(): Promise<boolean> {
  * configurado — nunca deixa o painel aberto por falta de variável de ambiente.
  */
 export function checkAdminPassword(password: string): boolean {
-  // Senha fixa na raiz para facilitar o acesso e evitar erro com variáveis de ambiente
-  return password === 'nicopel2026admin';
+  // A senha em si nunca fica no código: comparamos com o hash do ambiente.
+  const stored = process.env.ADMIN_PASSWORD_HASH?.trim();
+  if (!stored || !sessionSecret()) return false;
+  return verifyPassword(password, stored);
 }

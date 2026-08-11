@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useRef } from 'react';
 import { SiteHeader } from '@/components/institutional/SiteHeader';
 import { SiteFooter } from '@/components/institutional/SiteFooter';
@@ -19,9 +20,12 @@ export default function CurriculoPage() {
           <div className="bg-white rounded-xl shadow-sm p-10 max-w-lg text-center border border-nicopel-gray">
             <h1 className="text-2xl font-bold text-nicopel-green-deep">Enviado com sucesso!</h1>
             <p className="mt-4 text-nicopel-gray-text">{state.success}</p>
-            <a href="/" className="mt-8 inline-block px-6 py-3 bg-nicopel-black text-white rounded-xl font-semibold hover:bg-nicopel-ink transition-colors">
-              Voltar ao Início
-            </a>
+            <Link
+              href="/"
+              className="mt-8 inline-block rounded-xl bg-nicopel-black px-6 py-3 font-semibold text-white transition-colors hover:bg-nicopel-ink"
+            >
+              Voltar ao início
+            </Link>
           </div>
         </main>
         <SiteFooter />
