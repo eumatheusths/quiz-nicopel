@@ -83,3 +83,23 @@ export const adminAuditLog = pgTable('admin_audit_log', {
 });
 
 export type AdminAuditEntry = typeof adminAuditLog.$inferSelect;
+
+/**
+ * Currículos enviados através da rota /curriculo.
+ */
+export const resumes = pgTable('resumes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  fullName: text('full_name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone').notNull(),
+  age: integer('age'),
+  address: text('address'),
+  interests: text('interests').notNull(), // json array stringified
+  fileName: text('file_name'),
+  fileType: text('file_type'),
+  fileBase64: text('file_base64'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Resume = typeof resumes.$inferSelect;
+export type NewResume = typeof resumes.$inferInsert;

@@ -359,14 +359,25 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Header() {
+function Header({ activeTab = 'quiz' }: { activeTab?: 'quiz' | 'curriculos' }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Painel do quiz</h1>
-        <p className="mt-1 text-sm text-nicopel-gray-text">
-          {event.name} • {event.dateLabel} • código <code className="font-mono">{event.code}</code>
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">Painel Administrativo</h1>
+        <div className="mt-4 flex gap-4 border-b border-nicopel-gray pb-2">
+          <a
+            href="/admin"
+            className={`text-sm font-semibold ${activeTab === 'quiz' ? 'text-nicopel-black border-b-2 border-nicopel-black pb-2 -mb-[9px]' : 'text-nicopel-gray-text hover:text-nicopel-black'}`}
+          >
+            Participantes Quiz
+          </a>
+          <a
+            href="/admin/curriculos"
+            className={`text-sm font-semibold ${activeTab === 'curriculos' ? 'text-nicopel-black border-b-2 border-nicopel-black pb-2 -mb-[9px]' : 'text-nicopel-gray-text hover:text-nicopel-black'}`}
+          >
+            Currículos Recebidos
+          </a>
+        </div>
       </div>
       <form action={logout}>
         <button
