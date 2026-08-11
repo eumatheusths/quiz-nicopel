@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { AnswerSummary } from '@/components/result/AnswerSummary';
 import { CollaboratorCard } from '@/components/result/CollaboratorCard';
 import { ResultActions } from '@/components/result/ResultActions';
 import { SecondaryArea } from '@/components/result/SecondaryArea';
@@ -141,6 +142,9 @@ export default async function ResultPage({ params }: { params: Promise<{ role: s
 
           {/* --------------------------------------------------- Colaborador */}
           <CollaboratorCard collaboratorId={result.collaboratorId} />
+
+          {/* ------------------------------- Por que esse resultado + respostas */}
+          <AnswerSummary role={result.id} />
 
           {/* ---------------------------------------------- Área secundária */}
           <SecondaryArea role={result.id} />

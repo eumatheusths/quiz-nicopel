@@ -6,7 +6,9 @@ import { groups } from '@/content/quiz';
 import { results } from '@/content/results';
 import { company, event, resultUi } from '@/content/site-content';
 import { ROLE_IDS, type RoleId } from '@/content/types';
+import { tryExplainResult, type ResultExplanation } from '@/lib/explain';
 import { fitText, winAnsi, wrapText } from '@/lib/pdf';
+import type { AnswerMap } from '@/lib/scoring';
 
 /**
  * `GET /api/resultado/[cargo]/pdf` — lembrança do resultado, para a pessoa
@@ -70,12 +72,39 @@ function drawChip(
   return width;
 }
 
+/**
+ * `POST` do mesmo caminho: aceita `{ answers }` e acrescenta a página com o
+ * resumo das respostas. Vai no corpo, e não na URL, para as respostas não
+ * ficarem em histórico de navegação nem em log de servidor.
+ */
+export async function POST(request: Request, context: { params: Promise<{ role: string }> }) {
+  let answers: AnswerMap = {};
+  try {
+    const body = (await request.json()) as { answers?: AnswerMap };
+    if (body.answers && typeof body.answers === 'object') answers = body.answers;
+  } catch {
+    // Corpo inválido: devolve o PDF sem o resumo das respostas.
+  }
+  return buildResponse(context, answers);
+}
+
 export async function GET(_request: Request, context: { params: Promise<{ role: string }> }) {
+  return buildResponse(context, null);
+}
+
+async function buildResponse(
+  context: { params: Promise<{ role: string }> },
+  answers: AnswerMap | null,
+) {
   const { role } = await context.params;
 
   if (!ROLE_IDS.includes(role as RoleId)) {
     return NextResponse.json({ ok: false, message: 'Resultado não encontrado.' }, { status: 404 });
   }
+
+  // Só usamos a explicação se ela bater com o cargo pedido.
+  const explanation = answers ? tryExplainResult(answers) : null;
+  const validExplanation = explanation && explanation.role === role ? explanation : null;
 
   const result = results[role as RoleId];
   const group = groups[result.group];
@@ -294,6 +323,11 @@ export async function GET(_request: Request, context: { params: Promise<{ role: 
 
   page.drawRectangle({ x: 0, y: 0, width: PAGE.width, height: 6, color: GREEN });
 
+  // ------------------------------------------- Página 2: por que esse resultado
+  if (validExplanation) {
+    drawAnswersPage(pdf, fonts, validExplanation);
+  }
+
   const bytes = await pdf.save();
 
   return new NextResponse(bytes as unknown as BodyInit, {
@@ -301,8 +335,157 @@ export async function GET(_request: Request, context: { params: Promise<{ role: 
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="meu-resultado-nicopel-${role}.pdf"`,
-      // Só depende do cargo: pode ficar em cache tranquilamente.
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      // Sem respostas, o PDF depende só do cargo e pode ser cacheado. Com
+      // respostas, ele é individual e não pode ficar em cache nenhum.
+      'Cache-Control': validExplanation
+        ? 'no-store, max-age=0'
+        : 'public, max-age=3600, s-maxage=86400',
     },
   });
+}
+
+/**
+ * Segunda página: o "porquê" do cargo e o mapa das 10 respostas.
+ *
+ * Quebra em novas páginas sozinha quando o conteúdo passa do rodapé, então
+ * respostas longas nunca são cortadas.
+ */
+function drawAnswersPage(
+  pdf: PDFDocument,
+  fonts: Fonts,
+  explanation: ResultExplanation,
+): void {
+  let page = pdf.addPage([PAGE.width, PAGE.height]);
+  page.drawRectangle({ x: 0, y: PAGE.height - 5, width: PAGE.width, height: 5, color: GREEN });
+
+  let y = PAGE.height - MARGIN - 10;
+
+  page.drawText(winAnsi('Por que esse resultado'), {
+    x: MARGIN,
+    y,
+    size: 16,
+    font: fonts.bold,
+    color: INK,
+  });
+  y -= 24;
+
+  for (const line of wrapText(explanation.reason, fonts.regular, 10, CONTENT_WIDTH)) {
+    page.drawText(line, { x: MARGIN, y, size: 10, font: fonts.regular, color: INK });
+    y -= 14;
+  }
+  y -= 16;
+
+  // Ranking das áreas, com barra proporcional.
+  page.drawText(winAnsi('SUAS ESCOLHAS POR AREA'), {
+    x: MARGIN,
+    y,
+    size: 8,
+    font: fonts.bold,
+    color: MUTED,
+  });
+  y -= 18;
+
+  const maxScore = Math.max(...explanation.ranking.map((entry) => entry.score), 1);
+  const barX = MARGIN + 190;
+  const barWidth = CONTENT_WIDTH - 190 - 34;
+
+  for (const entry of explanation.ranking) {
+    const isWinner = entry.group === explanation.group;
+
+    page.drawText(fitText(entry.name, isWinner ? fonts.bold : fonts.regular, 9, 180), {
+      x: MARGIN,
+      y,
+      size: 9,
+      font: isWinner ? fonts.bold : fonts.regular,
+      color: isWinner ? INK : MUTED,
+    });
+
+    page.drawRectangle({
+      x: barX,
+      y: y - 1,
+      width: barWidth,
+      height: 8,
+      color: rgb(0.902, 0.906, 0.909),
+    });
+    if (entry.score > 0) {
+      page.drawRectangle({
+        x: barX,
+        y: y - 1,
+        width: (barWidth * entry.score) / maxScore,
+        height: 8,
+        color: isWinner ? GREEN : rgb(0.72, 0.73, 0.74),
+      });
+    }
+
+    page.drawText(`${entry.score}/8`, {
+      x: barX + barWidth + 8,
+      y,
+      size: 8.5,
+      font: isWinner ? fonts.bold : fonts.regular,
+      color: isWinner ? GREEN_DEEP : MUTED,
+    });
+
+    y -= 17;
+  }
+
+  y -= 14;
+  page.drawText(winAnsi('SUAS 10 RESPOSTAS'), {
+    x: MARGIN,
+    y,
+    size: 8,
+    font: fonts.bold,
+    color: MUTED,
+  });
+  y -= 20;
+
+  for (const step of explanation.steps) {
+    const promptLines = wrapText(step.prompt, fonts.regular, 8, CONTENT_WIDTH - 26);
+    const answerLines = wrapText(step.answer, fonts.bold, 9.5, CONTENT_WIDTH - 26);
+    const blockHeight = promptLines.length * 10 + answerLines.length * 12 + 14;
+
+    if (y - blockHeight < MARGIN + 20) {
+      page = pdf.addPage([PAGE.width, PAGE.height]);
+      page.drawRectangle({ x: 0, y: PAGE.height - 5, width: PAGE.width, height: 5, color: GREEN });
+      y = PAGE.height - MARGIN - 10;
+    }
+
+    // Número da pergunta em um selo escuro.
+    page.drawRectangle({ x: MARGIN, y: y - 9, width: 18, height: 18, color: BLACK });
+    const numberLabel = String(step.number);
+    page.drawText(numberLabel, {
+      x: MARGIN + 9 - fonts.bold.widthOfTextAtSize(numberLabel, 8) / 2,
+      y: y - 3,
+      size: 8,
+      font: fonts.bold,
+      color: GREEN,
+    });
+
+    let blockY = y;
+    for (const line of promptLines) {
+      page.drawText(line, { x: MARGIN + 26, y: blockY, size: 8, font: fonts.regular, color: MUTED });
+      blockY -= 10;
+    }
+    for (const line of answerLines) {
+      page.drawText(line, { x: MARGIN + 26, y: blockY, size: 9.5, font: fonts.bold, color: INK });
+      blockY -= 12;
+    }
+
+    page.drawText(winAnsi(`${step.insight}  ->  ${step.target}`), {
+      x: MARGIN + 26,
+      y: blockY,
+      size: 8,
+      font: fonts.regular,
+      color: GREEN_DEEP,
+    });
+
+    y = blockY - 16;
+  }
+
+  // Aviso final, no pé da última página.
+  const noticeLines = wrapText(resultUi.disclaimer, fonts.regular, 7.5, CONTENT_WIDTH);
+  let noticeY = Math.max(y - 6, MARGIN + noticeLines.length * 10);
+  for (const line of noticeLines) {
+    page.drawText(line, { x: MARGIN, y: noticeY, size: 7.5, font: fonts.regular, color: MUTED });
+    noticeY -= 10;
+  }
 }

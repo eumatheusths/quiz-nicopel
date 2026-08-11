@@ -219,6 +219,48 @@ test.describe('página de resultado', () => {
     ).toBeVisible();
   });
 
+  test('mostra o porquê do resultado e as 10 respostas', async ({ page }) => {
+    await completeQuiz(page);
+
+    await expect(page.getByRole('heading', { name: 'Por que esse resultado' })).toBeVisible();
+    await expect(page.getByText('Suas 10 respostas')).toBeVisible();
+
+    // Uma linha por pergunta respondida.
+    const items = page.locator('#resumo-respostas-titulo ~ * ol > li, ol li');
+    await expect(page.getByText(/\d\/8/).first()).toBeVisible();
+
+    // O ranking mostra as cinco áreas.
+    for (const area of [
+      'Negócios & Logística',
+      'Comunicação & Tecnologia',
+      'Pessoas, Saúde & Administração',
+      'Engenharia, Qualidade & Planejamento',
+      'Produção & Operação',
+    ]) {
+      await expect(page.getByText(area, { exact: true }).first()).toBeVisible();
+    }
+
+    expect(await items.count()).toBeGreaterThan(0);
+  });
+
+  test('o PDF baixado inclui o resumo das respostas', async ({ page }) => {
+    await completeQuiz(page);
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('link', { name: /Baixar meu resultado em PDF/ }).click(),
+    ]);
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk as Buffer);
+    const body = Buffer.concat(chunks);
+
+    expect(body.subarray(0, 5).toString()).toBe('%PDF-');
+    // A versão com respostas é sensivelmente maior que a simples.
+    expect(body.length).toBeGreaterThan(11_000);
+  });
+
   test('permite baixar o resultado em PDF', async ({ page }) => {
     await completeQuiz(page);
 

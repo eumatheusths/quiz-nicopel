@@ -112,6 +112,12 @@ export interface GeneralOption {
   label: string;
   group: GroupId;
   icon: IconName;
+  /**
+   * Duas ou três palavras dizendo o traço que essa escolha revela.
+   * Só aparece no resumo de respostas do resultado — nunca durante o quiz,
+   * para não entregar de antemão para onde cada alternativa aponta.
+   */
+  insight: string;
 }
 
 export interface GeneralQuestion {
@@ -126,6 +132,8 @@ export interface AdaptiveOption {
   label: string;
   role: RoleId;
   icon: IconName;
+  /** Traço revelado pela escolha, exibido no resumo de respostas. */
+  insight: string;
 }
 
 export interface AdaptiveQuestion {
