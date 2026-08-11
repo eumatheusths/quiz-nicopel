@@ -1,15 +1,31 @@
 import { expect, test } from '@playwright/test';
-import { answerAll, expectResultPage, startQuiz, waitForRaffleInvite } from './helpers';
+import {
+  completeQuiz,
+  expectResultPage,
+  mockRegistration,
+  startQuiz,
+} from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await mockRegistration(page);
+});
 
 test.describe('acessibilidade e resiliência', () => {
   test('é possível responder o quiz inteiro apenas com o teclado', async ({ page }) => {
     await page.goto('/quiz');
 
-    // Chega ao botão de início navegando por Tab e ativa com Enter.
-    await page.keyboard.press('Tab'); // pular para o conteúdo
-    await page.keyboard.press('Tab'); // logo
-    await page.keyboard.press('Tab'); // "Vamos lá"
-    await expect(page.getByRole('button', { name: 'Vamos lá' })).toBeFocused();
+    // O cadastro é preenchido e enviado sem tocar no mouse.
+    await page.getByLabel('Nome completo').focus();
+    await page.keyboard.type('Maria Silva');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('43999998888');
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('maria.silva@example.com');
+
+    await page.getByRole('spinbutton').focus();
+    await page.keyboard.type('21');
+
+    await page.getByRole('button', { name: 'Começar o quiz' }).focus();
     await page.keyboard.press('Enter');
 
     await expect(page.getByText('Pergunta 1 de 10')).toBeVisible();
@@ -25,36 +41,12 @@ test.describe('acessibilidade e resiliência', () => {
       await page.keyboard.press('Enter');
     }
 
-    await waitForRaffleInvite(page);
-
-    // O foco entra no modal e o Escape sai revelando o resultado.
-    await page.keyboard.press('Escape');
     await expectResultPage(page);
-  });
-
-  test('o foco fica preso dentro do modal do sorteio', async ({ page }) => {
-    await startQuiz(page);
-    await answerAll(page);
-    await waitForRaffleInvite(page);
-
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-
-    // Vinte tabulações seguidas continuam dentro do diálogo.
-    for (let i = 0; i < 20; i += 1) {
-      await page.keyboard.press('Tab');
-      const inside = await dialog.evaluate((element) => element.contains(document.activeElement));
-      expect(inside).toBe(true);
-    }
   });
 
   test('respeita prefers-reduced-motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await startQuiz(page);
-    await answerAll(page);
-    await waitForRaffleInvite(page);
-    await page.getByRole('button', { name: 'Pular e ver meu resultado' }).click();
-    await expectResultPage(page);
+    await completeQuiz(page);
 
     // A regra global zera as durações de animação (o Chrome serializa
     // 0.001ms como "1e-06s", por isso comparamos o valor numérico).
@@ -116,11 +108,7 @@ test.describe('acessibilidade e resiliência', () => {
       if (!['localhost', '127.0.0.1'].includes(url.hostname)) external.push(request.url());
     });
 
-    await startQuiz(page);
-    await answerAll(page);
-    await waitForRaffleInvite(page);
-    await page.getByRole('button', { name: 'Pular e ver meu resultado' }).click();
-    await expectResultPage(page);
+    await completeQuiz(page);
 
     expect(external).toEqual([]);
   });

@@ -1,53 +1,72 @@
 import { sql } from 'drizzle-orm';
-import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 /**
- * Inscrições no sorteio da visita técnica.
+ * Participantes do quiz.
  *
- * Contém dados pessoais: só é escrita quando a pessoa marca o consentimento
- * específico do sorteio. `deleted_at` implementa exclusão lógica para atender
- * pedidos de remoção sem quebrar a trilha de auditoria; a exclusão física
- * acontece no expurgo da retenção (ver README).
+ * O cadastro acontece ANTES das perguntas, então cada linha nasce quando a
+ * pessoa se identifica e é completada quando ela termina o quiz
+ * (`result_group`, `result_role` e `completed_at`).
+ *
+ * `raffle_consent` marca quem aceitou participar do sorteio da visita técnica —
+ * é o recorte que o painel usa para separar “fez o quiz” de “quer concorrer”.
+ *
+ * Contém dados pessoais. `deleted_at` implementa exclusão lógica para atender
+ * pedidos de remoção; a exclusão física acontece no expurgo (ver README).
  */
-export const raffleEntries = pgTable(
-  'raffle_entries',
+export const participants = pgTable(
+  'participants',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     /** Identifica o evento. Permite reusar o quiz em outras feiras. */
     eventCode: text('event_code').notNull(),
+
+    // --- Cadastro (coletado antes das perguntas) ---
     fullName: text('full_name').notNull(),
-    /** Normalizado em minúsculas no servidor. */
-    email: text('email'),
     /** Normalizado como +55DDNNNNNNNNN no servidor. */
-    phone: text('phone'),
-    course: text('course'),
-    institution: text('institution'),
-    resultGroup: text('result_group').notNull(),
-    resultRole: text('result_role').notNull(),
-    raffleConsent: boolean('raffle_consent').notNull(),
-    opportunitiesConsent: boolean('opportunities_consent').notNull().default(false),
+    phone: text('phone').notNull(),
+    /** Normalizado em minúsculas no servidor. */
+    email: text('email').notNull(),
+    age: integer('age').notNull(),
+
+    // --- Sorteio ---
+    raffleConsent: boolean('raffle_consent').notNull().default(false),
     /** Versão do texto de consentimento aceito, para prova documental. */
     consentVersion: text('consent_version').notNull(),
-    consentedAt: timestamp('consented_at', { withTimezone: true }).notNull().defaultNow(),
+
+    // --- Resultado (preenchido ao terminar o quiz) ---
+    resultGroup: text('result_group'),
+    resultRole: text('result_role'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (table) => [
-    // Um mesmo contato não se inscreve duas vezes no mesmo evento.
-    // O índice ignora registros excluídos, permitindo reinscrição após remoção.
-    uniqueIndex('raffle_entries_event_email_uq')
+    // Um mesmo contato não se cadastra duas vezes no mesmo evento.
+    // Os índices ignoram registros excluídos, permitindo recadastro após remoção.
+    uniqueIndex('participants_event_email_uq')
       .on(table.eventCode, table.email)
-      .where(sql`${table.email} is not null and ${table.deletedAt} is null`),
-    uniqueIndex('raffle_entries_event_phone_uq')
+      .where(sql`${table.deletedAt} is null`),
+    uniqueIndex('participants_event_phone_uq')
       .on(table.eventCode, table.phone)
-      .where(sql`${table.phone} is not null and ${table.deletedAt} is null`),
-    index('raffle_entries_event_created_idx').on(table.eventCode, table.createdAt),
-    index('raffle_entries_result_idx').on(table.eventCode, table.resultRole),
+      .where(sql`${table.deletedAt} is null`),
+    index('participants_event_created_idx').on(table.eventCode, table.createdAt),
+    index('participants_raffle_idx').on(table.eventCode, table.raffleConsent),
   ],
 );
 
-export type RaffleEntry = typeof raffleEntries.$inferSelect;
-export type NewRaffleEntry = typeof raffleEntries.$inferInsert;
+export type Participant = typeof participants.$inferSelect;
+export type NewParticipant = typeof participants.$inferInsert;
 
 /**
  * Trilha de auditoria das ações administrativas (exportação e exclusão).
@@ -58,7 +77,7 @@ export const adminAuditLog = pgTable('admin_audit_log', {
   action: text('action').notNull(),
   /** Detalhe sem PII. Ex.: "export_csv", "delete_entry". */
   detail: text('detail'),
-  /** Id da inscrição afetada, quando a ação for individual. */
+  /** Id do participante afetado, quando a ação for individual. */
   targetId: uuid('target_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_AGE,
+  MIN_AGE,
   fieldErrors,
+  formatPhone,
   normalizeEmail,
   normalizePhone,
-  normalizeRaffleInput,
+  normalizeRegistration,
   normalizeText,
-  raffleInputSchema,
+  registrationSchema,
+  resultUpdateSchema,
 } from '@/lib/validation';
 
 const validPayload = {
   fullName: 'Maria Silva',
-  email: '',
+  email: 'maria@email.com',
   phone: '(43) 99999-8888',
-  course: 'Administração',
-  institution: 'UNOPAR',
-  resultGroup: 'A' as const,
-  resultRole: 'comercial' as const,
-  raffleConsent: true as const,
-  opportunitiesConsent: false,
+  age: 21,
+  raffleConsent: false,
   website: '',
   submissionId: '3f1c2b7a-9d4e-4c1f-8a2b-7e5d6c4b3a21',
 };
@@ -49,8 +49,7 @@ describe('normalização de telefone', () => {
 
   it('reconhece variações do mesmo número como iguais — base da deduplicação', () => {
     const forms = ['(43) 99999-8888', '43 99999 8888', '+55 43 999998888', '5543999998888'];
-    const normalized = new Set(forms.map((form) => normalizePhone(form)));
-    expect(normalized.size).toBe(1);
+    expect(new Set(forms.map((form) => normalizePhone(form))).size).toBe(1);
   });
 
   it.each([
@@ -65,6 +64,19 @@ describe('normalização de telefone', () => {
   });
 });
 
+describe('formatação de telefone para leitura', () => {
+  it('formata celular e fixo', () => {
+    expect(formatPhone('+5543999998888')).toBe('(43) 99999-8888');
+    expect(formatPhone('+554333334444')).toBe('(43) 3333-4444');
+  });
+
+  it('não quebra com valor vazio ou inesperado', () => {
+    expect(formatPhone(null)).toBe('');
+    expect(formatPhone('')).toBe('');
+    expect(formatPhone('xyz')).toBe('xyz');
+  });
+});
+
 describe('normalização de texto', () => {
   it('colapsa espaços', () => {
     expect(normalizeText('  Maria   da  Silva ')).toBe('Maria da Silva');
@@ -75,142 +87,138 @@ describe('normalização de texto', () => {
   });
 });
 
-describe('schema do formulário do sorteio', () => {
-  it('aceita um cadastro válido só com WhatsApp', () => {
-    expect(raffleInputSchema.safeParse(validPayload).success).toBe(true);
-  });
-
-  it('aceita um cadastro válido só com e-mail', () => {
-    const parsed = raffleInputSchema.safeParse({
-      ...validPayload,
-      phone: '',
-      email: 'maria@email.com',
-    });
-    expect(parsed.success).toBe(true);
-  });
-
-  it('exige pelo menos um contato, ancorando o erro em um campo real', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, phone: '', email: '' });
-    expect(parsed.success).toBe(false);
-    if (!parsed.success) {
-      const errors = fieldErrors(parsed.error);
-      expect(errors.phone).toBe('Informe pelo menos um contato: WhatsApp ou e-mail.');
-    }
+describe('schema do cadastro', () => {
+  it('aceita um cadastro completo', () => {
+    expect(registrationSchema.safeParse(validPayload).success).toBe(true);
   });
 
   it('exige nome e sobrenome', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, fullName: 'Maria' });
+    const parsed = registrationSchema.safeParse({ ...validPayload, fullName: 'Maria' });
     expect(parsed.success).toBe(false);
     if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('fullName');
   });
 
-  it('exige o consentimento do sorteio', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, raffleConsent: false });
-    expect(parsed.success).toBe(false);
-    if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('raffleConsent');
+  it('exige e-mail válido', () => {
+    for (const email of ['', 'maria@@email', 'maria', 'maria@email']) {
+      const parsed = registrationSchema.safeParse({ ...validPayload, email });
+      expect(parsed.success, `deveria rejeitar "${email}"`).toBe(false);
+      if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('email');
+    }
   });
 
-  it('não exige o consentimento de oportunidades', () => {
-    expect(raffleInputSchema.safeParse({ ...validPayload, opportunitiesConsent: false }).success).toBe(
-      true,
-    );
-    expect(raffleInputSchema.safeParse({ ...validPayload, opportunitiesConsent: true }).success).toBe(
-      true,
-    );
+  it('exige WhatsApp válido', () => {
+    for (const phone of ['', '999', '(09) 99999-8888']) {
+      const parsed = registrationSchema.safeParse({ ...validPayload, phone });
+      expect(parsed.success, `deveria rejeitar "${phone}"`).toBe(false);
+      if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('phone');
+    }
+  });
+
+  it('reporta todos os campos com problema de uma vez', () => {
+    const parsed = registrationSchema.safeParse({
+      ...validPayload,
+      fullName: 'X',
+      email: 'nao-e-email',
+      phone: '1',
+      age: 5,
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      const errors = fieldErrors(parsed.error);
+      // Nenhum erro pode esconder os outros: a pessoa corrige tudo numa passada.
+      expect(Object.keys(errors).sort()).toEqual(['age', 'email', 'fullName', 'phone']);
+    }
+  });
+
+  describe('idade', () => {
+    it.each([MIN_AGE, 18, 25, 60, MAX_AGE])('aceita %i anos', (age) => {
+      expect(registrationSchema.safeParse({ ...validPayload, age }).success).toBe(true);
+    });
+
+    it.each([MIN_AGE - 1, 0, -3, MAX_AGE + 1, 150])('rejeita %i anos', (age) => {
+      const parsed = registrationSchema.safeParse({ ...validPayload, age });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('age');
+    });
+
+    it('rejeita idade fracionada, ausente ou não numérica', () => {
+      for (const age of [20.5, Number.NaN, undefined, '21']) {
+        const parsed = registrationSchema.safeParse({ ...validPayload, age });
+        expect(parsed.success, `deveria rejeitar ${String(age)}`).toBe(false);
+      }
+    });
+  });
+
+  it('trata o sorteio como opcional e desmarcado por padrão', () => {
+    const semCampo = registrationSchema.safeParse({ ...validPayload, raffleConsent: undefined });
+    expect(semCampo.success).toBe(true);
+    if (semCampo.success) {
+      expect(normalizeRegistration(semCampo.data).raffleConsent).toBe(false);
+    }
+
+    const marcado = registrationSchema.parse({ ...validPayload, raffleConsent: true });
+    expect(normalizeRegistration(marcado).raffleConsent).toBe(true);
   });
 
   it('rejeita o honeypot preenchido', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, website: 'http://spam.example' });
-    expect(parsed.success).toBe(false);
-  });
-
-  it('rejeita e-mail malformado', () => {
-    const parsed = raffleInputSchema.safeParse({
-      ...validPayload,
-      phone: '',
-      email: 'maria@@email',
-    });
-    expect(parsed.success).toBe(false);
-    if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('email');
-  });
-
-  it('rejeita telefone malformado', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, phone: '999' });
-    expect(parsed.success).toBe(false);
-    if (!parsed.success) expect(fieldErrors(parsed.error)).toHaveProperty('phone');
-  });
-
-  it('rejeita cargo inexistente', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, resultRole: 'presidente' });
-    expect(parsed.success).toBe(false);
+    expect(
+      registrationSchema.safeParse({ ...validPayload, website: 'http://spam.example' }).success,
+    ).toBe(false);
   });
 
   it('rejeita id de envio que não seja UUID', () => {
-    const parsed = raffleInputSchema.safeParse({ ...validPayload, submissionId: 'abc' });
-    expect(parsed.success).toBe(false);
+    expect(registrationSchema.safeParse({ ...validPayload, submissionId: 'abc' }).success).toBe(
+      false,
+    );
   });
 
   it('as mensagens de erro não repetem os valores enviados', () => {
-    const parsed = raffleInputSchema.safeParse({
+    const parsed = registrationSchema.safeParse({
       ...validPayload,
       fullName: 'Sobrenomelongo',
-      email: 'segredo@exemplo.com',
-      phone: '',
+      email: 'segredo@exemplo',
     });
     expect(parsed.success).toBe(false);
     if (!parsed.success) {
       const messages = Object.values(fieldErrors(parsed.error)).join(' ');
-      expect(messages).not.toContain('segredo@exemplo.com');
+      expect(messages).not.toContain('segredo@exemplo');
       expect(messages).not.toContain('Sobrenomelongo');
     }
   });
 });
 
-describe('normalização do payload aprovado', () => {
+describe('normalização do cadastro aprovado', () => {
   it('devolve os campos prontos para gravação', () => {
-    const parsed = raffleInputSchema.parse({
+    const parsed = registrationSchema.parse({
       ...validPayload,
       fullName: '  Maria   Silva  ',
       email: ' MARIA@Email.com ',
-      course: '  Administração ',
     });
-    const entry = normalizeRaffleInput(parsed);
-
-    expect(entry).toMatchObject({
+    expect(normalizeRegistration(parsed)).toMatchObject({
       fullName: 'Maria Silva',
       email: 'maria@email.com',
       phone: '+5543999998888',
-      course: 'Administração',
-      institution: 'UNOPAR',
-      resultGroup: 'A',
-      resultRole: 'comercial',
-      raffleConsent: true,
-      opportunitiesConsent: false,
+      age: 21,
+      raffleConsent: false,
     });
-  });
-
-  it('transforma campos opcionais vazios em null', () => {
-    const parsed = raffleInputSchema.parse({ ...validPayload, course: '', institution: '' });
-    const entry = normalizeRaffleInput(parsed);
-    expect(entry.course).toBeNull();
-    expect(entry.institution).toBeNull();
   });
 });
 
 describe('deduplicação por contato e evento', () => {
-  /** Reproduz a chave de unicidade usada pelo índice do banco. */
-  function dedupeKeys(eventCode: string, email: string | null, phone: string | null): string[] {
-    return [email && `${eventCode}|email|${email}`, phone && `${eventCode}|phone|${phone}`].filter(
-      (key): key is string => Boolean(key),
-    );
+  /** Reproduz as chaves de unicidade usadas pelos índices do banco. */
+  function dedupeKeys(eventCode: string, email: string, phone: string): string[] {
+    return [`${eventCode}|email|${email}`, `${eventCode}|phone|${phone}`];
   }
 
   it('duas grafias do mesmo contato colidem no mesmo evento', () => {
-    const first = normalizeRaffleInput(
-      raffleInputSchema.parse({ ...validPayload, phone: '(43) 99999-8888' }),
-    );
-    const second = normalizeRaffleInput(
-      raffleInputSchema.parse({ ...validPayload, phone: '+55 43 99999 8888', fullName: 'Maria S Silva' }),
+    const first = normalizeRegistration(registrationSchema.parse(validPayload));
+    const second = normalizeRegistration(
+      registrationSchema.parse({
+        ...validPayload,
+        phone: '+55 43 99999 8888',
+        email: 'MARIA@email.com',
+        fullName: 'Maria S Silva',
+      }),
     );
 
     const keysA = dedupeKeys('unopar-2026-08-13', first.email, first.phone);
@@ -219,19 +227,47 @@ describe('deduplicação por contato e evento', () => {
   });
 
   it('o mesmo contato em eventos diferentes não colide', () => {
-    const entry = normalizeRaffleInput(raffleInputSchema.parse(validPayload));
+    const entry = normalizeRegistration(registrationSchema.parse(validPayload));
     const keysA = dedupeKeys('unopar-2026-08-13', entry.email, entry.phone);
     const keysB = dedupeKeys('outro-evento-2027', entry.email, entry.phone);
     expect(keysA.some((key) => keysB.includes(key))).toBe(false);
   });
 
   it('contatos diferentes não colidem', () => {
-    const first = normalizeRaffleInput(raffleInputSchema.parse(validPayload));
-    const second = normalizeRaffleInput(
-      raffleInputSchema.parse({ ...validPayload, phone: '(43) 98888-7777' }),
+    const first = normalizeRegistration(registrationSchema.parse(validPayload));
+    const second = normalizeRegistration(
+      registrationSchema.parse({
+        ...validPayload,
+        phone: '(43) 98888-7777',
+        email: 'outra@email.com',
+      }),
     );
     const keysA = dedupeKeys('unopar-2026-08-13', first.email, first.phone);
     const keysB = dedupeKeys('unopar-2026-08-13', second.email, second.phone);
     expect(keysA.some((key) => keysB.includes(key))).toBe(false);
+  });
+});
+
+describe('gravação do resultado', () => {
+  const base = {
+    participantId: '3f1c2b7a-9d4e-4c1f-8a2b-7e5d6c4b3a21',
+    resultGroup: 'A',
+    resultRole: 'comercial',
+  };
+
+  it('aceita grupo e cargo válidos', () => {
+    expect(resultUpdateSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('rejeita cargo inexistente', () => {
+    expect(resultUpdateSchema.safeParse({ ...base, resultRole: 'presidente' }).success).toBe(false);
+  });
+
+  it('rejeita grupo inexistente', () => {
+    expect(resultUpdateSchema.safeParse({ ...base, resultGroup: 'Z' }).success).toBe(false);
+  });
+
+  it('rejeita id de participante inválido', () => {
+    expect(resultUpdateSchema.safeParse({ ...base, participantId: '123' }).success).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "id": "ca13faba-57d5-4491-9336-be61601ed9b8",
+  "id": "6ceb9c30-4f2c-4a6e-8152-9916be3c6fe8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -49,8 +49,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.raffle_entries": {
-      "name": "raffle_entries",
+    "public.participants": {
+      "name": "participants",
       "schema": "",
       "columns": {
         "id": {
@@ -72,50 +72,26 @@
           "primaryKey": false,
           "notNull": true
         },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "phone": {
           "name": "phone",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "course": {
-          "name": "course",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "institution": {
-          "name": "institution",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "result_group": {
-          "name": "result_group",
+        "email": {
+          "name": "email",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "result_role": {
-          "name": "result_role",
-          "type": "text",
+        "age": {
+          "name": "age",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
         "raffle_consent": {
           "name": "raffle_consent",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "opportunities_consent": {
-          "name": "opportunities_consent",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -127,12 +103,23 @@
           "primaryKey": false,
           "notNull": true
         },
-        "consented_at": {
-          "name": "consented_at",
+        "result_group": {
+          "name": "result_group",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_role": {
+          "name": "result_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -149,8 +136,8 @@
         }
       },
       "indexes": {
-        "raffle_entries_event_email_uq": {
-          "name": "raffle_entries_event_email_uq",
+        "participants_event_email_uq": {
+          "name": "participants_event_email_uq",
           "columns": [
             {
               "expression": "event_code",
@@ -166,13 +153,13 @@
             }
           ],
           "isUnique": true,
-          "where": "\"raffle_entries\".\"email\" is not null and \"raffle_entries\".\"deleted_at\" is null",
+          "where": "\"participants\".\"deleted_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "raffle_entries_event_phone_uq": {
-          "name": "raffle_entries_event_phone_uq",
+        "participants_event_phone_uq": {
+          "name": "participants_event_phone_uq",
           "columns": [
             {
               "expression": "event_code",
@@ -188,13 +175,13 @@
             }
           ],
           "isUnique": true,
-          "where": "\"raffle_entries\".\"phone\" is not null and \"raffle_entries\".\"deleted_at\" is null",
+          "where": "\"participants\".\"deleted_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
         },
-        "raffle_entries_event_created_idx": {
-          "name": "raffle_entries_event_created_idx",
+        "participants_event_created_idx": {
+          "name": "participants_event_created_idx",
           "columns": [
             {
               "expression": "event_code",
@@ -214,8 +201,8 @@
           "method": "btree",
           "with": {}
         },
-        "raffle_entries_result_idx": {
-          "name": "raffle_entries_result_idx",
+        "participants_raffle_idx": {
+          "name": "participants_raffle_idx",
           "columns": [
             {
               "expression": "event_code",
@@ -224,7 +211,7 @@
               "nulls": "last"
             },
             {
-              "expression": "result_role",
+              "expression": "raffle_consent",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

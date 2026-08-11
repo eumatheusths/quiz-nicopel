@@ -16,7 +16,7 @@ import { clearResultSnapshot, clearSession } from '@/lib/quiz-session';
  * O link compartilhado é sempre a URL pública do cargo — sem respostas nem
  * dados pessoais.
  */
-export function ResultActions({ roleName }: { roleName: string }) {
+export function ResultActions({ roleName, roleId }: { roleName: string; roleId: string }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -81,6 +81,18 @@ export function ResultActions({ roleName }: { roleName: string }) {
           </ButtonLink>
         )}
       </div>
+
+      {/* Guardar o resultado: o PDF é gerado no servidor a partir do cargo,
+          sem nenhum dado pessoal envolvido. */}
+      <a
+        href={`/api/resultado/${roleId}/pdf`}
+        download
+        onClick={() => track({ name: 'result_downloaded' })}
+        className="tap-target flex w-full items-center justify-center gap-2 rounded-[var(--radius-pill)] border-2 border-nicopel-black bg-white px-7 py-4 text-base font-semibold text-nicopel-ink transition-colors hover:bg-nicopel-gray/40"
+      >
+        <Icon name="clipboard" className="h-5 w-5" />
+        {resultUi.downloadPdf}
+      </a>
 
       <div className="grid gap-2.5 sm:grid-cols-2">
         <Button variant="secondary" size="lg" onClick={share}>

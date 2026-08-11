@@ -28,8 +28,14 @@ describe('conteúdo institucional', () => {
 
   it('versiona o texto de consentimento', () => {
     expect(consent.version).toMatch(/^v\d+/);
-    expect(consent.raffle.length).toBeGreaterThan(80);
-    expect(consent.opportunities.length).toBeGreaterThan(20);
+    expect(consent.registration.length).toBeGreaterThan(80);
+    expect(consent.raffle.length).toBeGreaterThan(40);
+  });
+
+  it('não menciona mais a Lumen Pack', () => {
+    const allContent = JSON.stringify({ company, history, numbers });
+    expect(allContent).not.toMatch(/lumen/i);
+    expect(company.group).toEqual(['Nicopel Embalagens', 'Nicobox', 'Nicocup']);
   });
 });
 

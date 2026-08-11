@@ -12,7 +12,7 @@ import {
   sessionCookieOptions,
 } from '@/lib/admin-auth';
 import { getDb } from '@/lib/db';
-import { adminAuditLog, raffleEntries } from '@/lib/schema';
+import { adminAuditLog, participants } from '@/lib/schema';
 import { clientKey, logServerEvent, rateLimit } from '@/lib/security';
 
 /**
@@ -69,24 +69,24 @@ export async function logout(): Promise<void> {
   revalidatePath('/admin');
 }
 
-/** Exclusão lógica de uma inscrição, a pedido do titular dos dados. */
+/** Exclusão lógica de um participante, a pedido do titular dos dados. */
 export async function deleteEntry(_prev: ActionState, formData: FormData): Promise<ActionState> {
   if (!(await isAuthenticated())) return { error: 'Sessão expirada. Entre novamente.' };
 
   const id = formData.get('id');
-  if (typeof id !== 'string' || id.length === 0) return { error: 'Inscrição inválida.' };
+  if (typeof id !== 'string' || id.length === 0) return { error: 'Cadastro inválido.' };
 
   const db = getDb();
   if (!db) return { error: 'Banco de dados indisponível.' };
 
   try {
     const removed = await db
-      .update(raffleEntries)
+      .update(participants)
       .set({ deletedAt: new Date() })
-      .where(and(eq(raffleEntries.id, id), isNull(raffleEntries.deletedAt)))
-      .returning({ id: raffleEntries.id });
+      .where(and(eq(participants.id, id), isNull(participants.deletedAt)))
+      .returning({ id: participants.id });
 
-    if (removed.length === 0) return { error: 'Inscrição não encontrada.' };
+    if (removed.length === 0) return { error: 'Cadastro não encontrado.' };
 
     await db.insert(adminAuditLog).values({
       action: 'delete_entry',
@@ -94,9 +94,9 @@ export async function deleteEntry(_prev: ActionState, formData: FormData): Promi
       targetId: id,
     });
 
-    logServerEvent('admin_entry_deleted');
+    logServerEvent('admin_participant_deleted');
     revalidatePath('/admin');
-    return { success: 'Inscrição excluída.' };
+    return { success: 'Cadastro excluído.' };
   } catch {
     logServerEvent('admin_entry_delete_failed');
     return { error: 'Não foi possível excluir agora.' };

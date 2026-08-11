@@ -33,7 +33,7 @@ export const company = {
       'https://www.google.com/maps/search/?api=1&query=' +
       encodeURIComponent('Nicopel Embalagens, Rod. Carlos João Strass, 780, Jardim Tropical, Londrina - PR'),
   },
-  group: ['Nicopel Embalagens', 'Nicobox', 'Nicocup', 'Lumen Pack'],
+  group: ['Nicopel Embalagens', 'Nicobox', 'Nicocup'],
 } as const;
 
 export const links = {
@@ -57,7 +57,7 @@ export const history = {
     { year: '2021', text: 'Novo parque fabril de 6.000 m² e atendimento nacional.' },
     {
       year: '2026',
-      text: 'Atuação nacional consolidada e expansão com o lançamento do e-commerce Lumen Pack.',
+      text: 'Atuação nacional consolidada e expansão com o lançamento do e-commerce.',
     },
   ],
 } as const;
@@ -132,38 +132,39 @@ export const resultUi = {
     cta: 'Entrar no banco de talentos',
   },
   share: 'Compartilhar meu resultado',
+  downloadPdf: 'Baixar meu resultado em PDF',
   shareCopied: 'Link copiado!',
   retake: 'Refazer o quiz',
   openMap: 'Abrir no mapa',
 } as const;
 
-export const raffle = {
-  banner: 'Sua próxima descoberta pode acontecer dentro da fábrica!',
-  text: 'Quer participar do sorteio de uma visita técnica à Nicopel e conhecer de perto como milhões de embalagens ganham forma?',
-  optionYes: 'Sim, quero participar',
-  optionNo: 'Agora não, quero ver meu resultado',
-  skipLink: 'Pular e ver meu resultado',
-  ctaYes: 'Continuar para o cadastro',
-  ctaNo: 'Ver meu resultado',
-  formTitle: 'Quase lá! Só precisamos do básico.',
-  formSubtitle: 'Nada de CPF, endereço ou dados sensíveis — apenas o necessário para o sorteio.',
-  submit: 'Confirmar participação',
-  submitting: 'Confirmando...',
-  successTitle: 'Participação confirmada!',
-  successText: 'Agora chegou a hora de descobrir qual área da Nicopel mais combina com você.',
-  errorText:
-    'Não conseguimos confirmar sua participação no sorteio agora. Você pode tentar novamente ou ver seu resultado normalmente.',
+/** Cadastro exibido antes das perguntas começarem. */
+export const registration = {
+  title: 'Antes de começar, se apresente',
+  subtitle:
+    'Precisamos só do básico para registrar sua participação e falar com você se for sorteado.',
+  submit: 'Começar o quiz',
+  submitting: 'Salvando...',
   retry: 'Tentar novamente',
-  seeResultAnyway: 'Ver meu resultado mesmo assim',
+  continueAnyway: 'Continuar sem salvar',
+  errorText:
+    'Não conseguimos salvar seu cadastro agora. Você pode tentar novamente ou seguir para o quiz mesmo assim.',
   privacyLinkLabel: 'Como seus dados serão usados?',
   fields: {
     fullName: 'Nome completo',
-    contact: 'WhatsApp ou e-mail',
-    whatsapp: 'WhatsApp',
+    phone: 'WhatsApp',
     email: 'E-mail',
-    course: 'Curso (opcional)',
-    institution: 'Instituição',
+    age: 'Idade',
   },
+  ageHint: 'anos',
+} as const;
+
+/** Convite para o sorteio, agora como um opt-in dentro do cadastro. */
+export const raffle = {
+  banner: 'Sua próxima descoberta pode acontecer dentro da fábrica!',
+  text: 'Quer concorrer a uma visita técnica à Nicopel e conhecer de perto como milhões de embalagens ganham forma?',
+  checkbox: 'Sim, quero participar do sorteio da visita técnica',
+  note: 'Participar do sorteio é opcional. Você vê seu resultado do mesmo jeito.',
 } as const;
 
 /**
@@ -174,27 +175,28 @@ export const CONSENT_VERSION = 'v1-2026-08-13';
 
 export const consent = {
   version: CONSENT_VERSION,
+  registration:
+    'Ao começar o quiz, você concorda que a Nicopel use nome, WhatsApp, e-mail e idade para registrar sua participação nesta ação. Li o aviso de privacidade e sei como solicitar a exclusão dos meus dados.',
   raffle:
-    'Concordo que a Nicopel use os dados informados exclusivamente para realizar este sorteio, entrar em contato caso eu seja selecionado e organizar a visita técnica. Li o aviso de privacidade e sei como solicitar a exclusão dos meus dados.',
-  opportunities:
-    'Também quero receber novidades sobre vagas, estágios e banco de talentos da Nicopel.',
+    'Concordo que a Nicopel use os dados informados também para realizar o sorteio da visita técnica e entrar em contato caso eu seja selecionado.',
 } as const;
 
 export const privacy = {
   title: 'Como seus dados serão usados',
   purpose:
-    'Os dados informados no formulário do sorteio são usados exclusivamente para realizar o sorteio da visita técnica, entrar em contato com a pessoa sorteada e organizar a visita.',
+    'Os dados do cadastro são usados para registrar sua participação nesta ação da Nicopel e, para quem marcar a opção do sorteio, para realizar o sorteio da visita técnica e entrar em contato com a pessoa selecionada.',
   collected: [
     'Nome completo',
-    'WhatsApp e/ou e-mail (pelo menos um)',
-    'Curso (opcional)',
-    'Instituição de ensino',
+    'WhatsApp',
+    'E-mail',
+    'Idade',
     'Resultado do quiz (área e cargo indicados)',
+    'Se você marcou ou não a participação no sorteio',
     'Data, hora e versão do texto de consentimento aceito',
   ],
   notCollected: [
     'CPF ou qualquer documento',
-    'Data de nascimento',
+    'Data de nascimento (apenas a idade em anos)',
     'Endereço residencial',
     'Dados sensíveis (saúde, biometria, origem racial, entre outros)',
   ],
@@ -204,7 +206,7 @@ export const privacy = {
     'A Nicopel Embalagens é a responsável por esta ação e pelo tratamento dos dados coletados aqui.',
   channel: company.contactEmail,
   optionalNote:
-    'O consentimento para receber novidades sobre vagas é totalmente separado e opcional: recusá-lo não afeta a participação no sorteio.',
+    'A participação no sorteio é opcional e independente: quem não marcar a opção faz o quiz e vê o resultado normalmente.',
   analyticsNote:
     'Os dados do formulário não são compartilhados com ferramentas de analytics. As métricas do quiz são anônimas e agregadas.',
   /** Instrução operacional interna, exibida apenas na página /privacidade. */

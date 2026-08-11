@@ -27,6 +27,12 @@ export interface QuizSessionState {
   answers: AnswerMap;
   /** Índice da pergunta atual, de 0 a 9. */
   step: number;
+  /**
+   * UUID opaco devolvido pelo cadastro. Não é dado pessoal — serve só para o
+   * quiz anexar o resultado ao participante no final. `null` quando o cadastro
+   * não pôde ser salvo (rede fora) e a pessoa optou por continuar.
+   */
+  participantId: string | null;
 }
 
 export interface ResultSnapshot {
@@ -92,6 +98,7 @@ function parseSession(raw: string | null): QuizSessionState | null {
       seed: Number.isFinite(candidate.seed) ? (candidate.seed as number) : 1,
       answers: candidate.answers,
       step: Math.max(0, Math.min(9, Math.trunc(candidate.step ?? 0) || 0)),
+      participantId: typeof candidate.participantId === 'string' ? candidate.participantId : null,
     };
   } catch {
     return null;
@@ -101,12 +108,13 @@ function parseSession(raw: string | null): QuizSessionState | null {
 /** `undefined` significa “ainda não li o storage nesta aba”. */
 let sessionState: QuizSessionState | null | undefined;
 
-export function createSession(): QuizSessionState {
+export function createSession(participantId: string | null = null): QuizSessionState {
   return {
     v: VERSION,
     seed: Math.floor(Math.random() * 2 ** 31),
     answers: {},
     step: 0,
+    participantId,
   };
 }
 

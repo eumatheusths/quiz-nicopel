@@ -6,7 +6,11 @@
  *
  * Roda de forma segura: usa uma conexão dedicada e a fecha ao final.
  */
-import 'dotenv/config';
+// `.env.local` primeiro: é o arquivo que o Next usa e o que o .gitignore protege.
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config();
+
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';

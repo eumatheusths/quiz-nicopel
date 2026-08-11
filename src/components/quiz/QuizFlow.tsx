@@ -1,15 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { ProcessingScreen } from '@/components/quiz/ProcessingScreen';
 import { ProgressBar } from '@/components/quiz/ProgressBar';
 import { QuestionStep, type StepOption } from '@/components/quiz/QuestionStep';
-import { RaffleModal } from '@/components/raffle/RaffleModal';
+import { RegistrationStep } from '@/components/quiz/RegistrationStep';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { TOTAL_QUESTIONS, generalQuestions } from '@/content/quiz';
-import { landing, quizUi } from '@/content/site-content';
+import { quizUi } from '@/content/site-content';
 import type { GroupId, QuestionId, RoleId } from '@/content/types';
 import { track } from '@/lib/analytics';
 import {
@@ -25,15 +25,15 @@ import {
 import { computeGroupStage, computeResult, getAdaptiveQuestions } from '@/lib/scoring';
 
 /**
- * Orquestra a jornada: intro → 10 perguntas → processamento → convite do
- * sorteio → resultado.
+ * Orquestra a jornada: cadastro → 10 perguntas → processamento → resultado.
  *
- * O progresso vem do store de sessão (`useSyncExternalStore`), então recarregar
- * a página durante o evento devolve a pessoa exatamente onde ela estava — sem
- * descompasso de hidratação e sem efeito de restauração.
+ * O cadastro vem antes das perguntas e é onde a pessoa decide, de forma
+ * opcional, participar do sorteio. O progresso vem do store de sessão
+ * (`useSyncExternalStore`), então recarregar a página durante o evento devolve
+ * a pessoa exatamente onde ela estava — sem descompasso de hidratação.
  */
 
-type Phase = 'intro' | 'questions' | 'processing' | 'raffle';
+type Phase = 'registration' | 'questions' | 'processing';
 
 const PROCESSING_MS = 1200;
 
@@ -52,14 +52,10 @@ export function QuizFlow() {
     getSessionServerSnapshot,
   );
 
-  const [phase, setPhase] = useState<Phase>('intro');
+  const [phase, setPhase] = useState<Phase>('registration');
   const [restoreChecked, setRestoreChecked] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
-  const [result, setResult] = useState<{
-    role: RoleId;
-    group: GroupId;
-    secondaryGroup: GroupId;
-  } | null>(null);
+  const [result, setResult] = useState<{ role: RoleId; group: GroupId } | null>(null);
 
   const headingRef = useRef<HTMLDivElement>(null);
   const revealedRef = useRef(false);
@@ -68,7 +64,7 @@ export function QuizFlow() {
   // trouxe o valor do navegador (depois da hidratação), sem efeito.
   if (!restoreChecked && session !== null) {
     setRestoreChecked(true);
-    if (Object.keys(session.answers).length > 0) setPhase('questions');
+    setPhase('questions');
   }
 
   const step = session?.step ?? 0;
@@ -125,18 +121,19 @@ export function QuizFlow() {
 
   // Processamento curto e com teto fixo: nunca atrasa o resultado de propósito.
   useEffect(() => {
-    if (phase !== 'processing') return;
+    if (phase !== 'processing' || !result) return;
     const timer = window.setTimeout(() => {
-      setPhase('raffle');
-      track({ name: 'raffle_invite_opened' });
+      if (revealedRef.current) return;
+      revealedRef.current = true;
+      router.push(`/resultado/${result.role}`);
     }, PROCESSING_MS);
     return () => window.clearTimeout(timer);
-  }, [phase]);
+  }, [phase, result, router]);
 
   // --- Ações ---------------------------------------------------------------
 
-  function start() {
-    saveSession(createSession());
+  function handleRegistered(participantId: string | null) {
+    saveSession(createSession(participantId));
     setPhase('questions');
     track({ name: 'quiz_started' });
     track({ name: 'quiz_question_reached', step: 1 });
@@ -178,30 +175,46 @@ export function QuizFlow() {
   }
 
   function goBack() {
-    if (!session || step === 0) {
-      setPhase('intro');
-      return;
-    }
+    if (!session || step === 0) return;
     setShowValidation(false);
     saveSession({ ...session, step: step - 1 });
   }
 
   function finish() {
     if (!session) return;
+
+    let computed;
     try {
-      const computed = computeResult(session.answers);
-      const snapshot = {
-        role: computed.role,
-        group: computed.group,
-        secondaryGroup: computed.secondaryGroup,
-      };
-      setResult(snapshot);
-      saveResultSnapshot(snapshot);
-      track({ name: 'quiz_completed', group: computed.group });
-      setPhase('processing');
+      computed = computeResult(session.answers);
     } catch {
       // Estado inconsistente (ex.: storage adulterado): recomeça em vez de travar.
       restart(true);
+      return;
+    }
+
+    setResult({ role: computed.role, group: computed.group });
+    saveResultSnapshot({
+      role: computed.role,
+      group: computed.group,
+      secondaryGroup: computed.secondaryGroup,
+    });
+    track({ name: 'quiz_completed', group: computed.group });
+    setPhase('processing');
+
+    // Anexa o resultado ao cadastro. Falhar aqui não pode segurar a revelação,
+    // então nem esperamos a resposta.
+    if (session.participantId) {
+      void fetch('/api/participants', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantId: session.participantId,
+          resultGroup: computed.group,
+          resultRole: computed.role,
+        }),
+      }).catch(() => {
+        // O resultado já está na tela; a gravação é secundária.
+      });
     }
   }
 
@@ -209,52 +222,13 @@ export function QuizFlow() {
     if (!silent && !window.confirm(quizUi.restartConfirm)) return;
     clearSession();
     setResult(null);
-    setPhase('intro');
+    setPhase('registration');
   }
-
-  const reveal = useCallback(() => {
-    if (!result || revealedRef.current) return;
-    revealedRef.current = true;
-    router.push(`/resultado/${result.role}`);
-  }, [result, router]);
 
   // --- Render --------------------------------------------------------------
 
-  if (phase === 'intro') {
-    return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col justify-center px-4 py-10 sm:px-6">
-        <div className="rounded-[var(--radius-card)] border border-nicopel-gray bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-          <span className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] bg-nicopel-green-soft px-3 py-1.5 text-xs font-semibold text-nicopel-green-deep">
-            <Icon name="sparkles" className="h-4 w-4" />
-            {landing.badge}
-          </span>
-          <h1 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-balance sm:text-3xl">
-            Antes de começar
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-nicopel-gray-text">{landing.welcome}</p>
-
-          <ul className="mt-5 space-y-2.5 text-sm text-nicopel-ink">
-            {[
-              'São 10 perguntas e leva de 2 a 3 minutos.',
-              'Você pode voltar e mudar qualquer resposta.',
-              'No fim, você conhece uma área que existe de verdade na Nicopel.',
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2.5">
-                <Icon
-                  name="check-badge"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-nicopel-green-deep"
-                />
-                <span className="leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-
-          <Button variant="primary" size="lg" onClick={start} className="mt-7 w-full">
-            Vamos lá
-          </Button>
-        </div>
-      </div>
-    );
+  if (phase === 'registration') {
+    return <RegistrationStep onRegistered={handleRegistered} />;
   }
 
   if (phase === 'processing') {
@@ -264,68 +238,58 @@ export function QuizFlow() {
   const hasAnswer = currentStep ? Boolean(answers[currentStep.questionId]) : false;
 
   return (
-    <>
-      {/* Com o convite aberto, o quiz atrás dele sai da árvore de acessibilidade
-          e do alcance do teclado — nada de foco escapando para o fundo. */}
-      <div
-        inert={phase === 'raffle' ? true : undefined}
-        className="mx-auto w-full max-w-xl px-4 py-6 sm:px-6 sm:py-8"
-      >
-        <ProgressBar current={step + 1} total={TOTAL_QUESTIONS} />
+    <div className="mx-auto w-full max-w-xl px-4 py-6 sm:px-6 sm:py-8">
+      <ProgressBar current={step + 1} total={TOTAL_QUESTIONS} />
 
-        <div ref={headingRef} tabIndex={-1} className="mt-7 outline-none">
-          {currentStep && (
-            <QuestionStep
-              questionId={currentStep.questionId}
-              prompt={currentStep.prompt}
-              options={currentStep.options}
-              selectedId={answers[currentStep.questionId]}
-              onSelect={select}
-            />
-          )}
-        </div>
-
-        <p aria-live="assertive" className="mt-3 min-h-5 text-sm font-medium text-red-700">
-          {showValidation ? quizUi.validation : ''}
-        </p>
-
-        <div className="mt-5 flex items-center gap-3">
-          <Button variant="secondary" size="lg" onClick={goBack} className="px-5">
-            <Icon name="route" className="h-4 w-4 rotate-180" />
-            {quizUi.back}
-          </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={goNext}
-            // Fica visualmente apagado antes da escolha, mas continua ativo:
-            // um botão realmente desabilitado deixaria a mensagem de validação
-            // inalcançável para quem usa teclado ou leitor de tela.
-            className={`flex-1 ${hasAnswer ? '' : 'opacity-45'}`}
-          >
-            {step === TOTAL_QUESTIONS - 1 ? quizUi.finish : quizUi.next}
-          </Button>
-        </div>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => restart()}
-            className="tap-target inline-flex items-center justify-center px-4 text-xs font-medium text-nicopel-gray-text underline underline-offset-4 hover:text-nicopel-ink"
-          >
-            {quizUi.restart}
-          </button>
-        </div>
+      <div ref={headingRef} tabIndex={-1} className="mt-7 outline-none">
+        {currentStep && (
+          <QuestionStep
+            questionId={currentStep.questionId}
+            prompt={currentStep.prompt}
+            options={currentStep.options}
+            selectedId={answers[currentStep.questionId]}
+            onSelect={select}
+          />
+        )}
       </div>
 
-      {result && (
-        <RaffleModal
-          open={phase === 'raffle'}
-          resultGroup={result.group}
-          resultRole={result.role}
-          onReveal={reveal}
-        />
-      )}
-    </>
+      <p aria-live="assertive" className="mt-3 min-h-5 text-sm font-medium text-red-700">
+        {showValidation ? quizUi.validation : ''}
+      </p>
+
+      <div className="mt-5 flex items-center gap-3">
+        <Button
+          variant="secondary"
+          size="lg"
+          onClick={goBack}
+          disabled={step === 0}
+          className="px-5"
+        >
+          <Icon name="route" className="h-4 w-4 rotate-180" />
+          {quizUi.back}
+        </Button>
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={goNext}
+          // Fica visualmente apagado antes da escolha, mas continua ativo:
+          // um botão realmente desabilitado deixaria a mensagem de validação
+          // inalcançável para quem usa teclado ou leitor de tela.
+          className={`flex-1 ${hasAnswer ? '' : 'opacity-45'}`}
+        >
+          {step === TOTAL_QUESTIONS - 1 ? quizUi.finish : quizUi.next}
+        </Button>
+      </div>
+
+      <div className="mt-6 text-center">
+        <button
+          type="button"
+          onClick={() => restart()}
+          className="tap-target inline-flex items-center justify-center px-4 text-xs font-medium text-nicopel-gray-text underline underline-offset-4 hover:text-nicopel-ink"
+        >
+          {quizUi.restart}
+        </button>
+      </div>
+    </div>
   );
 }

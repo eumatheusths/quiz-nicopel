@@ -151,7 +151,7 @@ export default async function ResultPage({ params }: { params: Promise<{ role: s
           </p>
 
           {/* ------------------------------------------------------- CTAs */}
-          <ResultActions roleName={result.name} />
+          <ResultActions roleName={result.name} roleId={result.id} />
 
           {/* --------------------------------------- História e números */}
           <CompanyStory />

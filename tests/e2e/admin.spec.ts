@@ -16,10 +16,10 @@ test.describe('painel administrativo', () => {
   test('sem autenticação, o painel mostra apenas o login', async ({ page }) => {
     await page.goto('/admin');
 
-    await expect(page.getByRole('heading', { name: 'Painel do sorteio' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Painel do quiz' })).toBeVisible();
     // Nenhum dado de participante é exposto.
     await expect(page.getByRole('table')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Exportar CSV (UTF-8)' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Baixar planilha (CSV)' })).toHaveCount(0);
   });
 
   test('a exportação exige autenticação', async ({ request }) => {
@@ -64,10 +64,10 @@ test.describe('painel administrativo', () => {
 
     const download = await Promise.all([
       page.waitForEvent('download'),
-      page.getByRole('link', { name: 'Exportar CSV (UTF-8)' }).click(),
+      page.getByRole('link', { name: 'Baixar planilha (CSV)' }).click(),
     ]).then(([event]) => event);
 
-    expect(download.suggestedFilename()).toMatch(/^sorteio-unopar-2026-08-13-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(download.suggestedFilename()).toMatch(/^participantes-unopar-2026-08-13-\d{4}-\d{2}-\d{2}\.csv$/);
   });
 });
 

@@ -74,12 +74,11 @@ export default function PrivacyPage() {
 
             <Block title="Seus dois consentimentos, separados" icon="check-badge">
               <p className="rounded-xl bg-nicopel-gray/40 p-3 text-xs leading-relaxed">
-                <strong className="font-semibold">Sorteio (obrigatório para participar):</strong>{' '}
-                {consent.raffle}
+                <strong className="font-semibold">Cadastro (necessário para fazer o quiz):</strong>{' '}
+                {consent.registration}
               </p>
               <p className="mt-2 rounded-xl bg-nicopel-gray/40 p-3 text-xs leading-relaxed">
-                <strong className="font-semibold">Oportunidades (opcional):</strong>{' '}
-                {consent.opportunities}
+                <strong className="font-semibold">Sorteio (opcional):</strong> {consent.raffle}
               </p>
               <p className="mt-3">{privacy.optionalNote}</p>
               <p className="mt-2 text-xs text-nicopel-gray-mid">

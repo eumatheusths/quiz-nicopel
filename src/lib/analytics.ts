@@ -14,7 +14,8 @@ export type AnalyticsEvent =
   | { name: 'raffle_choice'; choice: 'sim' | 'nao' | 'pulou' }
   | { name: 'raffle_submitted'; status: 'ok' | 'erro' }
   | { name: 'talent_pool_clicked' }
-  | { name: 'result_shared'; method: 'share' | 'copy' };
+  | { name: 'result_shared'; method: 'share' | 'copy' }
+  | { name: 'result_downloaded' };
 
 type VercelAnalytics = (
   kind: 'event',

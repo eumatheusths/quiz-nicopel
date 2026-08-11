@@ -1,60 +1,41 @@
-'use client';
-
-import { useState } from 'react';
-
 /**
- * Logo da Nicopel.
+ * Logo oficial da Nicopel.
  *
- * A logo oficial NÃO é redesenhada aqui. O componente carrega o arquivo
- * autorizado de `public/brand/` e, enquanto ele não existir, mostra um
- * marcador tipográfico neutro — deliberadamente diferente da marca, para não
- * ser confundido com ela. Veja `public/brand/README.md`.
+ * Usa os arquivos originais fornecidos pela Nicopel, sem redesenhar, deformar
+ * ou recolorir: `nicopel-logo.png` sobre fundos claros e
+ * `nicopel-logo-branca.png` sobre fundos escuros ou fotos.
+ *
+ * As dimensões intrínsecas (802 × 216) vão no HTML para o navegador reservar o
+ * espaço exato e a página não pular durante o carregamento.
  */
 
-export interface LogoProps {
-  variant?: 'dark' | 'light';
-  className?: string;
-}
+const INTRINSIC = { width: 802, height: 216 } as const;
 
 const SOURCES = {
-  dark: '/brand/nicopel-logo.svg',
-  light: '/brand/nicopel-logo-branca.svg',
+  dark: '/brand/nicopel-logo.png',
+  light: '/brand/nicopel-logo-branca.png',
 } as const;
 
-export function Logo({ variant = 'dark', className = 'h-8' }: LogoProps) {
-  const [failed, setFailed] = useState(false);
-  const isLight = variant === 'light';
+export interface LogoProps {
+  /** `dark` = logo preta (fundo claro). `light` = logo branca (fundo escuro). */
+  variant?: 'dark' | 'light';
+  /** Classe de altura, ex.: `h-8`. A largura acompanha na proporção original. */
+  className?: string;
+  priority?: boolean;
+}
 
-  if (!failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element -- asset local de tamanho fixo; next/image não agrega aqui e o fallback depende de onError.
-      <img
-        src={SOURCES[variant]}
-        alt="Nicopel Embalagens"
-        className={`w-auto ${className}`}
-        onError={() => setFailed(true)}
-        decoding="async"
-      />
-    );
-  }
-
+export function Logo({ variant = 'dark', className = 'h-8', priority = false }: LogoProps) {
   return (
-    <span
-      className={`inline-flex items-center gap-2 ${className}`}
-      role="img"
-      aria-label="Nicopel Embalagens"
-      data-logo-placeholder="true"
-    >
-      <span
-        aria-hidden="true"
-        className="inline-block h-3 w-3 rounded-sm bg-nicopel-green"
-        style={{ transform: 'rotate(45deg)' }}
-      />
-      <span
-        className={`text-lg font-bold tracking-tight ${isLight ? 'text-white' : 'text-nicopel-ink'}`}
-      >
-        Nicopel
-      </span>
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e de tamanho fixo; o otimizador do next/image não traz ganho aqui.
+    <img
+      src={SOURCES[variant]}
+      alt="Grupo Nicopel Embalagens"
+      width={INTRINSIC.width}
+      height={INTRINSIC.height}
+      className={`w-auto ${className}`}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
+      decoding="async"
+    />
   );
 }
