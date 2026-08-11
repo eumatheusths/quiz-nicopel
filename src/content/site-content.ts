@@ -87,7 +87,7 @@ export const culture =
   'A Nicopel é uma empresa familiar em essência e profissional em estrutura. A diretoria é presente e acessível, as lideranças se desenvolvem continuamente e a empresa investe em saúde integral, tecnologia e treinamentos. Respeito, honestidade, igualdade, comprometimento e orgulho em pertencer fazem parte da cultura.';
 
 export const landing = {
-  hero: 'Descubra em qual área o seu perfil se encaixa',
+  hero: 'Descubra através do quiz em qual área o seu perfil se encaixa',
   subtitle:
     'Responda a 10 perguntas rápidas e descubra qual caminho dentro da indústria tem mais a ver com você.',
   badge: 'Quiz rápido • 2 a 3 minutos',

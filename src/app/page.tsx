@@ -41,7 +41,11 @@ export default function HomePage() {
                 </Eyebrow>
 
                 <h1 className="mt-5 text-[2rem] font-bold leading-[1.08] tracking-tight text-balance sm:text-5xl">
-                  {landing.hero}
+                  {landing.hero.split(/(quiz)/i).map((part, i) => 
+                    part.toLowerCase() === 'quiz' 
+                      ? <span key={i} className="text-nicopel-green-deep underline decoration-4 decoration-nicopel-green-soft underline-offset-4">{part}</span> 
+                      : part
+                  )}
                 </h1>
 
                 <p className="mt-5 max-w-md text-base leading-relaxed text-nicopel-gray-text sm:text-lg">
