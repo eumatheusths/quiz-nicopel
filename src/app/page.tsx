@@ -48,10 +48,15 @@ export default function HomePage() {
                   {landing.subtitle}
                 </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <ButtonLink href="/quiz" variant="primary" size="lg" className="w-full sm:w-auto">
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                  <ButtonLink 
+                    href="/quiz" 
+                    variant="inverse" 
+                    size="lg" 
+                    className="w-full sm:w-auto shadow-xl shadow-nicopel-green/30 ring-4 ring-nicopel-green-soft hover:ring-nicopel-green scale-105 transform transition-all duration-300"
+                  >
                     {landing.primaryCta}
-                    <Icon name="target" className="h-5 w-5" />
+                    <Icon name="target" className="h-5 w-5 animate-pulse" />
                   </ButtonLink>
                   <ButtonLink
                     href="#a-nicopel"
