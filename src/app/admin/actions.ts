@@ -36,11 +36,12 @@ export async function login(_prev: ActionState, formData: FormData): Promise<Act
   }
 
   const requestHeaders = await headers();
-  const limit = rateLimit(clientKey(requestHeaders, 'admin-login'), LOGIN_RATE_LIMIT);
-  if (!limit.allowed) {
-    logServerEvent('admin_login_rate_limited');
-    return { error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
-  }
+  // Limite de tentativas removido temporariamente para facilitar o login
+  // const limit = rateLimit(clientKey(requestHeaders, 'admin-login'), LOGIN_RATE_LIMIT);
+  // if (!limit.allowed) {
+  //   logServerEvent('admin_login_rate_limited');
+  //   return { error: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' };
+  // }
 
   const password = formData.get('password');
   if (typeof password !== 'string' || password.length === 0) {
