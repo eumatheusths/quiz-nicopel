@@ -122,10 +122,6 @@ export default function PrivacyPage() {
             </Block>
           </div>
 
-          {/* Nota operacional para a equipe da Nicopel, não é texto jurídico. */}
-          <p className="mt-8 rounded-[var(--radius-card)] border-2 border-dashed border-amber-300 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">
-            <strong className="font-semibold">Nota interna:</strong> {privacy.legalReviewNote}
-          </p>
         </div>
       </main>
 

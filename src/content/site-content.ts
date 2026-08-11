@@ -37,8 +37,11 @@ export const company = {
 } as const;
 
 export const links = {
-  /** PENDENTE: URL oficial do banco de talentos. */
-  talentPool: '[URL_DO_BANCO_DE_TALENTOS]',
+  /**
+   * Banco de talentos: a própria página /curriculo do sistema, onde a pessoa
+   * envia o CV. Se um dia a Nicopel tiver um portal externo, é só trocar aqui.
+   */
+  talentPool: '/curriculo',
   /** PENDENTE: URL da política de privacidade completa da Nicopel. */
   privacyPolicy: '[URL_POLITICA_PRIVACIDADE]',
   companySite: company.site,
@@ -128,8 +131,8 @@ export const resultUi = {
   },
   talentPool: {
     title: 'Seu próximo passo pode começar aqui',
-    text: 'Conheça oportunidades de estágio, vagas CLT e caminhos de crescimento na Nicopel.',
-    cta: 'Entrar no banco de talentos',
+    text: 'Deixe seu currículo no banco de talentos da Nicopel. Leva um minuto, e a gente guarda seu contato para as próximas oportunidades de estágio e vagas CLT.',
+    cta: 'Enviar meu currículo',
   },
   share: 'Compartilhar meu resultado',
   downloadPdf: 'Baixar meu resultado em PDF',
@@ -209,7 +212,10 @@ export const privacy = {
     'A participação no sorteio é opcional e independente: quem não marcar a opção faz o quiz e vê o resultado normalmente.',
   analyticsNote:
     'Os dados do formulário não são compartilhados com ferramentas de analytics. As métricas do quiz são anônimas e agregadas.',
-  /** Instrução operacional interna, exibida apenas na página /privacidade. */
+  /**
+   * Lembrete interno, propositalmente NÃO exibido na página: é assunto de
+   * equipe, não do visitante. A pendência está registrada em CONTENT_PENDING.md.
+   */
   legalReviewNote:
     'Este texto precisa de revisão jurídica da Nicopel antes da publicação em produção.',
 } as const;

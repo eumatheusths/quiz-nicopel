@@ -95,6 +95,8 @@ export const resumes = pgTable('resumes', {
   age: integer('age'),
   address: text('address'),
   interests: text('interests').notNull(), // json array stringified
+  /** Cargo indicado pelo quiz, quando a pessoa veio pela página de resultado. */
+  quizResult: text('quiz_result'),
   fileName: text('file_name'),
   fileType: text('file_type'),
   fileBase64: text('file_base64'),

@@ -1,5 +1,6 @@
 'use server';
 
+import { ROLE_IDS, type RoleId } from '@/content/types';
 import { getDb } from '@/lib/db';
 import { resumes } from '@/lib/schema';
 
@@ -21,9 +22,16 @@ export async function submitResume(_prev: ResumeActionState, formData: FormData)
   }
 
   const ageStr = formData.get('age')?.toString();
-  const age = ageStr ? parseInt(ageStr, 10) : null;
+  const parsedAge = ageStr ? Number.parseInt(ageStr, 10) : Number.NaN;
+  const age = Number.isFinite(parsedAge) ? parsedAge : null;
   const address = formData.get('address')?.toString();
-  const interests = formData.getAll('interests').map(i => i.toString());
+  const interests = formData.getAll('interests').map((i) => i.toString());
+
+  // Cargo indicado pelo quiz, quando a pessoa veio pela página de resultado.
+  // Só aceitamos um id conhecido: o valor chega do cliente e não é confiável.
+  const rawQuizResult = formData.get('quizResult')?.toString();
+  const quizResult =
+    rawQuizResult && ROLE_IDS.includes(rawQuizResult as RoleId) ? rawQuizResult : null;
 
   const file = formData.get('cvFile') as File | null;
   let fileBase64 = null;
@@ -48,6 +56,7 @@ export async function submitResume(_prev: ResumeActionState, formData: FormData)
       age,
       address,
       interests: JSON.stringify(interests),
+      quizResult,
       fileName,
       fileType,
       fileBase64,

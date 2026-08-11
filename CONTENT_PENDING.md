@@ -12,15 +12,23 @@ Legenda: 🔴 bloqueia a publicação · 🟡 melhora bastante a experiência ·
 
 | # | Item | Onde alterar | Situação |
 | - | ---- | ------------ | -------- |
-| 1 | **URL do banco de talentos** | `src/content/site-content.ts` → `links.talentPool` | `[URL_DO_BANCO_DE_TALENTOS]`. Sem ela, o resultado mostra um aviso pedindo para falar com a equipe no estande, em vez de um link inventado. |
-| 2 | **URL da política de privacidade completa** | `src/content/site-content.ts` → `links.privacyPolicy` | `[URL_POLITICA_PRIVACIDADE]`. A página `/privacidade` avisa que ela será publicada. |
-| 3 | **Data de exclusão dos dados (retenção)** | variável de ambiente `DATA_RETENTION_DATE` | Não definida. A `/privacidade` mostra “pendente de definição” e garante exclusão sob pedido. |
-| 4 | **Revisão jurídica do aviso de privacidade** | `src/content/site-content.ts` → `privacy` | O texto foi escrito em linguagem simples e precisa de validação jurídica da Nicopel. |
-| 5 | **Regras oficiais do sorteio** | — | Quem pode participar, como e quando é o sorteio, como o ganhador é avisado, data da visita. O sistema **não** sorteia: o CSV exportado é a fonte oficial. |
-| 6 | **Logos oficiais** | `public/brand/` | Ver `public/brand/README.md`. Hoje há um marcador tipográfico neutro. |
-| 7 | **Senha e segredo do painel** | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Sem eles o `/admin` fica fechado e avisa que não está configurado. |
-| 8 | **Banco de dados** | `DATABASE_URL` | Sem ele o quiz roda inteiro, mas a inscrição no sorteio fica indisponível. |
-| 9 | **URL final de produção** | `NEXT_PUBLIC_SITE_URL` | Necessária para os metadados e para o link de compartilhamento. |
+| 1 | **URL da política de privacidade completa** | `src/content/site-content.ts` → `links.privacyPolicy` | `[URL_POLITICA_PRIVACIDADE]`. A página `/privacidade` avisa que ela será publicada. |
+| 2 | **Data de exclusão dos dados (retenção)** | variável de ambiente `DATA_RETENTION_DATE` | Não definida. A `/privacidade` mostra “pendente de definição” e garante exclusão sob pedido. |
+| 3 | **Revisão jurídica do aviso de privacidade** | `src/content/site-content.ts` → `privacy` | O texto foi escrito em linguagem simples e precisa de validação jurídica da Nicopel. |
+| 4 | **Regras oficiais do sorteio** | — | Quem pode participar, como e quando é o sorteio, como o ganhador é avisado, data da visita. O sistema **não** sorteia: o CSV exportado é a fonte oficial. |
+| 5 | **Logos oficiais** | `public/brand/` | Ver `public/brand/README.md`. Hoje há um marcador tipográfico neutro. |
+| 6 | **Senha e segredo do painel** | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Sem eles o `/admin` fica fechado e avisa que não está configurado. |
+| 7 | **Banco de dados** | `DATABASE_URL` | Sem ele o quiz roda inteiro, mas a inscrição no sorteio fica indisponível. |
+| 8 | **URL final de produção** | `NEXT_PUBLIC_SITE_URL` | Necessária para os metadados e para o link de compartilhamento. |
+
+---
+
+## ✅ Resolvido
+
+**Banco de talentos.** O CTA final do resultado leva para a página `/curriculo`
+do próprio sistema, onde a pessoa envia o CV. O cargo indicado pelo quiz vai
+junto e fica gravado com o currículo. Se um dia a Nicopel tiver um portal
+externo de vagas, basta trocar `links.talentPool` em `site-content.ts`.
 
 ---
 

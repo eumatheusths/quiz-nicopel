@@ -1,116 +1,83 @@
-'use client';
-
-import Link from 'next/link';
-import { useActionState, useRef } from 'react';
-import { SiteHeader } from '@/components/institutional/SiteHeader';
+import type { Metadata } from 'next';
 import { SiteFooter } from '@/components/institutional/SiteFooter';
-import { submitResume, type ResumeActionState } from './actions';
+import { SiteHeader } from '@/components/institutional/SiteHeader';
+import { Eyebrow, SectionHeading } from '@/components/ui/Section';
+import { Icon } from '@/components/ui/Icon';
+import { results } from '@/content/results';
+import { ROLE_IDS, type RoleId } from '@/content/types';
+import { ResumeForm } from './ResumeForm';
 
-const initialState: ResumeActionState = {};
+/**
+ * Banco de talentos.
+ *
+ * É o destino do CTA final do quiz. Componente de servidor para ler o cargo
+ * vindo da URL sem precisar de `useSearchParams` (que exigiria um limite de
+ * Suspense); o formulário em si é cliente.
+ */
 
-export default function CurriculoPage() {
-  const [state, formAction, isPending] = useActionState(submitResume, initialState);
-  const formRef = useRef<HTMLFormElement>(null);
+export const metadata: Metadata = {
+  title: 'Banco de talentos',
+  description:
+    'Envie seu currículo para o banco de talentos da Nicopel Embalagens e fique de olho nas próximas oportunidades.',
+  robots: { index: false, follow: true },
+};
 
-  if (state.success) {
-    return (
-      <>
-        <SiteHeader />
-        <main className="min-h-[70vh] flex flex-col items-center justify-center p-6 bg-nicopel-gray/25">
-          <div className="bg-white rounded-xl shadow-sm p-10 max-w-lg text-center border border-nicopel-gray">
-            <h1 className="text-2xl font-bold text-nicopel-green-deep">Enviado com sucesso!</h1>
-            <p className="mt-4 text-nicopel-gray-text">{state.success}</p>
-            <Link
-              href="/"
-              className="mt-8 inline-block rounded-xl bg-nicopel-black px-6 py-3 font-semibold text-white transition-colors hover:bg-nicopel-ink"
-            >
-              Voltar ao início
-            </Link>
-          </div>
-        </main>
-        <SiteFooter />
-      </>
-    );
-  }
+/**
+ * Cada cargo do quiz cai em uma das áreas de triagem do RH, que são mais
+ * amplas. Serve só para pré-marcar a opção — a pessoa pode trocar à vontade.
+ */
+const AREA_BY_ROLE: Record<RoleId, string> = {
+  comercial: 'Comercial/Vendas',
+  compras: 'Administrativo',
+  financeiro: 'Administrativo',
+  logistica: 'Logística',
+  marketing: 'Comercial/Vendas',
+  design: 'Administrativo',
+  ti: 'Administrativo',
+  rh: 'Administrativo',
+  administrativo: 'Administrativo',
+  endomarketing: 'Administrativo',
+  sst: 'Produção',
+  pcp: 'Produção',
+  'engenharia-produto': 'Produção',
+  qualidade: 'Produção',
+  producao: 'Produção',
+  'operador-maquinas': 'Manutenção',
+};
+
+export default async function CurriculoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ de?: string }>;
+}) {
+  const { de } = await searchParams;
+  const role = de && ROLE_IDS.includes(de as RoleId) ? (de as RoleId) : null;
 
   return (
     <>
-      <SiteHeader />
-      <main className="min-h-screen bg-nicopel-gray/25 py-12 px-4 sm:px-6">
-        <div className="max-w-2xl mx-auto bg-white rounded-[var(--radius-card)] shadow-[var(--shadow-soft)] border border-nicopel-gray p-6 sm:p-10">
-          <h1 className="text-2xl font-bold tracking-tight mb-2">Envie seu Currículo</h1>
-          <p className="text-nicopel-gray-text text-sm mb-8">
-            Preencha rapidamente os dados abaixo. Nome, e-mail e telefone são obrigatórios.
-          </p>
+      <SiteHeader compact />
 
-          <form ref={formRef} action={formAction} className="space-y-6">
-            {state.error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100">
-                {state.error}
-              </div>
-            )}
+      <main id="conteudo" className="bg-nicopel-gray/25">
+        <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-6 sm:py-14">
+          <Eyebrow>
+            <Icon name="target" className="h-4 w-4" />
+            Banco de talentos
+          </Eyebrow>
 
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label htmlFor="fullName" className="block text-sm font-semibold mb-1">Nome completo *</label>
-                <input required type="text" id="fullName" name="fullName" className="w-full rounded-xl border-2 border-nicopel-gray px-4 py-2.5 focus:border-nicopel-black outline-none transition-colors" />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold mb-1">E-mail *</label>
-                <input required type="email" id="email" name="email" className="w-full rounded-xl border-2 border-nicopel-gray px-4 py-2.5 focus:border-nicopel-black outline-none transition-colors" />
-              </div>
+          <SectionHeading
+            title="Deixe seu currículo com a gente"
+            description="Preenchendo leva um minuto. Guardamos seu contato para chamar quando abrir uma oportunidade que combine com o seu perfil."
+            className="mt-4 mb-8"
+          />
 
-              <div>
-                <label htmlFor="phone" className="block text-sm font-semibold mb-1">Telefone / WhatsApp *</label>
-                <input required type="tel" id="phone" name="phone" className="w-full rounded-xl border-2 border-nicopel-gray px-4 py-2.5 focus:border-nicopel-black outline-none transition-colors" />
-              </div>
-
-              <div>
-                <label htmlFor="age" className="block text-sm font-semibold mb-1">Idade</label>
-                <input type="number" id="age" name="age" className="w-full rounded-xl border-2 border-nicopel-gray px-4 py-2.5 focus:border-nicopel-black outline-none transition-colors" />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label htmlFor="address" className="block text-sm font-semibold mb-1">Endereço (Rua, Bairro, Cidade)</label>
-                <input type="text" id="address" name="address" className="w-full rounded-xl border-2 border-nicopel-gray px-4 py-2.5 focus:border-nicopel-black outline-none transition-colors" />
-              </div>
-            </div>
-
-            <fieldset className="pt-4 border-t border-nicopel-gray">
-              <legend className="block text-sm font-semibold mb-3">Áreas de Interesse</legend>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {['Produção', 'Logística', 'Administrativo', 'Comercial/Vendas', 'Manutenção', 'Jovem Aprendiz'].map(area => (
-                  <label key={area} className="flex items-center gap-3 p-3 border border-nicopel-gray rounded-xl hover:bg-nicopel-gray/25 cursor-pointer transition-colors">
-                    <input type="checkbox" name="interests" value={area} className="w-4 h-4 text-nicopel-black accent-nicopel-black" />
-                    <span className="text-sm">{area}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <div className="pt-4 border-t border-nicopel-gray">
-              <label htmlFor="cvFile" className="block text-sm font-semibold mb-1">Anexar Currículo (Opcional)</label>
-              <p className="text-xs text-nicopel-gray-text mb-3">Formatos aceitos: PDF, DOC, DOCX. Tamanho máximo: 5MB.</p>
-              <input 
-                type="file" 
-                id="cvFile" 
-                name="cvFile" 
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-                className="w-full text-sm text-nicopel-gray-text file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-nicopel-black file:text-white hover:file:bg-nicopel-ink cursor-pointer bg-white border-2 border-nicopel-gray border-dashed rounded-xl py-4 px-2"
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={isPending}
-              className="w-full bg-nicopel-green-deep hover:bg-nicopel-green-deep/90 text-white font-bold py-3.5 px-4 rounded-xl disabled:opacity-50 transition-colors"
-            >
-              {isPending ? 'Enviando...' : 'Enviar Currículo'}
-            </button>
-          </form>
+          <ResumeForm
+            quizResultName={role ? results[role].name : null}
+            quizResultId={role}
+            suggestedArea={role ? AREA_BY_ROLE[role] : null}
+          />
         </div>
       </main>
+
       <SiteFooter />
     </>
   );

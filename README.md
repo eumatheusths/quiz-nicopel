@@ -325,7 +325,6 @@ Conteúdo (detalhes em [CONTENT_PENDING.md](./CONTENT_PENDING.md)):
 
 - [ ] nome oficial do evento confirmado
 - [ ] data e horário confirmados
-- [ ] URL do banco de talentos inserida
 - [ ] política de privacidade publicada e revisada juridicamente
 - [ ] período de retenção definido (`DATA_RETENTION_DATE`)
 - [ ] regras do sorteio aprovadas

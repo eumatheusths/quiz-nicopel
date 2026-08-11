@@ -114,7 +114,9 @@ export function ResultActions({ roleName, roleId }: { roleName: string; roleId: 
           </p>
         ) : (
           <ButtonLink
-            href={links.talentPool}
+            // Leva o cargo junto: a página do currículo mostra o resultado e o
+            // grava com o CV, ligando as duas pontas do sistema.
+            href={`${links.talentPool}?de=${roleId}`}
             variant="inverse"
             size="lg"
             className="mt-4 w-full"

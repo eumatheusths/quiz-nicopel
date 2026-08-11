@@ -261,6 +261,42 @@ test.describe('página de resultado', () => {
     expect(body.length).toBeGreaterThan(11_000);
   });
 
+  test('o banco de talentos leva para o envio de currículo, com o cargo junto', async ({
+    page,
+  }) => {
+    await completeQuiz(page);
+
+    const cta = page.getByRole('link', { name: /Enviar meu currículo/ });
+    await expect(cta).toBeVisible();
+
+    const href = await cta.getAttribute('href');
+    expect(href).toMatch(/^\/curriculo\?de=[a-z-]+$/);
+
+    await cta.click();
+
+    await expect(page).toHaveURL(/\/curriculo\?de=[a-z-]+$/);
+    await expect(page.getByRole('heading', { name: 'Deixe seu currículo com a gente' })).toBeVisible();
+    await expect(page.getByText(/Seu resultado no quiz foi/)).toBeVisible();
+
+    // O cargo viaja num campo oculto e uma área de interesse vem pré-marcada.
+    await expect(page.locator('input[name="quizResult"]')).toHaveCount(1);
+    await expect(page.locator('input[name="interests"]:checked')).toHaveCount(1);
+
+    // Os campos essenciais do CV estão lá.
+    await expect(page.getByLabel('Nome completo')).toBeVisible();
+    await expect(page.getByLabel('E-mail')).toBeVisible();
+    await expect(page.locator('input[type=file]')).toBeVisible();
+  });
+
+  test('a página de currículo funciona sem vir do quiz', async ({ page }) => {
+    await page.goto('/curriculo');
+
+    await expect(page.getByRole('heading', { name: 'Deixe seu currículo com a gente' })).toBeVisible();
+    await expect(page.getByText(/Seu resultado no quiz foi/)).toHaveCount(0);
+    await expect(page.locator('input[name="quizResult"]')).toHaveCount(0);
+    await expect(page.locator('input[name="interests"]:checked')).toHaveCount(0);
+  });
+
   test('permite baixar o resultado em PDF', async ({ page }) => {
     await completeQuiz(page);
 
