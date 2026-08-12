@@ -12,8 +12,8 @@ aparece sozinha no próximo carregamento.
 | `gustavo.webp` | Gustavo — Supervisor de P&D, Design e Pré-Impressão | Design & Arte |
 | `lindomar.webp` | Lindomar — Líder Mecânico e Eletrônico | Operador de Máquinas |
 | `nicolas.webp` | Nicolas — Líder do Setor de Acoplagem | Produção / Fabril |
-| `alysson.webp` | Alysson — Comercial (cargo pendente) | — ainda não publicado |
-| `derciel.webp` | Derciel — setor e cargo pendentes | — ainda não publicado |
+| `alysson.webp` | Alysson — Analista de Vendas | reserva do card de Comercial |
+| `derciel.webp` | Derciel — Supervisor de TI | Tecnologia da Informação |
 
 Enquanto o arquivo não existir, `PhotoFrame` mostra a composição gráfica de
 dobras de papel. Nada quebra: o card continua exibindo nome, cargo e depoimento.
@@ -35,9 +35,9 @@ Ou use o script de assets do projeto como referência: `scripts/prepare-assets.m
    controle interno da Nicopel.
 2. Conferir se o cargo em `src/content/collaborators.ts` bate com o que consta
    no RH.
-3. Para Alysson e Derciel: preencher `role` com o cargo exato e trocar
-   `status` para `'confirmed'`. Enquanto forem `pending`, os cards deles não
-   aparecem em resultado nenhum.
+3. Comercial tem duas pessoas confirmadas. Michele está no card; para trocar
+   por Alysson, aponte `collaboratorId` do cargo `comercial`, em
+   `src/content/results.ts`, para `'alysson'`.
 
 **Nunca** deduza cargo a partir de redes sociais nem escreva um depoimento no
 lugar da pessoa.

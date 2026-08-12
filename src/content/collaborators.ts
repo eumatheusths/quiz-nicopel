@@ -5,9 +5,9 @@ import type { Collaborator } from './types';
  *
  * REGRA ABSOLUTA: nada aqui pode ser deduzido de redes sociais nem inventado.
  * Cargo, depoimento e tempo de casa vêm exatamente do que a própria pessoa
- * contou. Quem não informou o cargo fica com `role: null` e `status: 'pending'`
- * — a interface cai no placeholder institucional em vez de exibir um card
- * incompleto ou um cargo presumido.
+ * contou. Quem não tiver cargo confirmado fica com `role: null` e
+ * `status: 'pending'` — a interface cai no placeholder institucional em vez de
+ * exibir um card incompleto ou um cargo presumido.
  *
  * As fotos apontam para `public/collaborators/<id>.webp`. Enquanto o arquivo
  * não existir, `PhotoFrame` mostra a composição gráfica de dobras de papel;
@@ -87,33 +87,32 @@ export const collaborators: Record<string, Collaborator> = {
     status: 'confirmed',
   },
 
-  // --- Pendentes: o depoimento chegou, o cargo exato não --------------------
+  // Comercial tem duas pessoas confirmadas: Michele está no card do resultado
+  // e Alysson fica disponível para trocar (basta apontar `collaboratorId` do
+  // cargo `comercial` em results.ts para 'alysson').
 
   alysson: {
     id: 'alysson',
     name: 'Alysson',
-    // PENDENTE: o depoimento diz "hoje faço parte do Comercial", sem o cargo
-    // exato. Preencher com o título que consta no RH e trocar o status.
-    role: null,
+    role: 'Analista de Vendas',
     photo: '/collaborators/alysson.webp',
-    photoAlt: 'Alysson, da área Comercial da Nicopel Embalagens.',
+    photoAlt: 'Alysson, analista de vendas da Nicopel Embalagens.',
     quote:
       'Entrei na Nicopel em 2022, iniciando minha trajetória na área de Produção. Hoje faço parte do Comercial, e nesse período tive a oportunidade de adquirir novos conhecimentos, desenvolver minhas habilidades e crescer profissionalmente dentro da empresa.',
     tenure: 'Na Nicopel desde 2022',
-    status: 'pending',
+    status: 'confirmed',
   },
 
   derciel: {
     id: 'derciel',
     name: 'Derciel',
-    // PENDENTE: o depoimento não menciona o setor nem o cargo.
-    role: null,
+    role: 'Supervisor de TI',
     photo: '/collaborators/derciel.webp',
-    photoAlt: 'Derciel, colaborador da Nicopel Embalagens.',
+    photoAlt: 'Derciel, supervisor de TI da Nicopel Embalagens.',
     quote:
       'Entrei na Nicopel em outubro de 2023 e foi uma das maiores experiências, pois no começo tudo era muito novo ainda. Fui acompanhando a evolução da empresa durante esses quase 3 anos e sempre me senti em casa. Os colaboradores são competentes e dispostos a acreditar nos nossos objetivos, principalmente a diretoria, que sempre nos apoia desde as pequenas coisas. Sou muito grato por estar no Grupo Nicopel!',
     tenure: 'Na Nicopel desde outubro de 2023',
-    status: 'pending',
+    status: 'confirmed',
   },
 };
 

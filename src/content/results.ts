@@ -150,8 +150,8 @@ export const results: Record<RoleId, ResultContent> = {
       'e áreas afins',
     ],
     icon: 'monitor',
-    collaboratorId: null,
-    contentStatus: 'pending-collaborator',
+    collaboratorId: 'derciel',
+    contentStatus: 'confirmed',
   },
   rh: {
     id: 'rh',
