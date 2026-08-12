@@ -4,86 +4,115 @@ import type { Collaborator } from './types';
  * Colaboradores reais da Nicopel.
  *
  * REGRA ABSOLUTA: nada aqui pode ser deduzido de redes sociais nem inventado.
- * Enquanto `status` for `pending`, a interface exibe o placeholder institucional
- * definido em `site-content.ts` (`collaboratorPlaceholder`) — nunca um cargo,
- * foto ou depoimento presumido.
+ * Cargo, depoimento e tempo de casa vêm exatamente do que a própria pessoa
+ * contou. Quem não informou o cargo fica com `role: null` e `status: 'pending'`
+ * — a interface cai no placeholder institucional em vez de exibir um card
+ * incompleto ou um cargo presumido.
  *
- * Para publicar um colaborador:
- *  1. preencha `role`, `photo`, `photoAlt`, `quote` (e `tenure`, se confirmado);
- *  2. troque `status` para `'confirmed'`;
- *  3. coloque a foto autorizada em `public/collaborators/<arquivo>.webp`;
- *  4. registre a autorização de imagem no controle interno da Nicopel.
+ * As fotos apontam para `public/collaborators/<id>.webp`. Enquanto o arquivo
+ * não existir, `PhotoFrame` mostra a composição gráfica de dobras de papel;
+ * assim que o arquivo for colocado lá, a foto aparece sozinha, sem mudar código.
  */
 export const collaborators: Record<string, Collaborator> = {
-  'comercial-vendas': {
-    id: 'comercial-vendas',
-    // Michele ou Alysson — Vendas/Comercial. Definir qual pessoa será exibida.
-    name: '[DEFINIR: Michele ou Alysson]',
-    role: null, // [INSERIR CARGO EXATO]
-    photo: null, // [INSERIR FOTO AUTORIZADA]
-    photoAlt: null,
-    quote: null, // [INSERIR DEPOIMENTO REAL DE 3 LINHAS]
-    tenure: null,
-    status: 'pending',
+  michele: {
+    id: 'michele',
+    name: 'Michele',
+    role: 'Líder do Setor Comercial',
+    photo: '/collaborators/michele.webp',
+    photoAlt: 'Michele, líder do Setor Comercial da Nicopel Embalagens.',
+    quote:
+      'Entrei na Nicopel em 2021 como vendedora e, ao longo dessa trajetória, tive a oportunidade de aprender, crescer e assumir novos desafios. Hoje, como líder do Setor Comercial, vejo o quanto cada experiência contribuiu para a profissional que me tornei.',
+    tenure: 'Na Nicopel desde 2021',
+    status: 'confirmed',
   },
+
+  jeniffer: {
+    id: 'jeniffer',
+    name: 'Jeniffer',
+    role: 'Analista de Departamento Pessoal',
+    photo: '/collaborators/jeniffer.webp',
+    photoAlt: 'Jeniffer, analista de Departamento Pessoal da Nicopel Embalagens.',
+    quote:
+      'Comecei minha trajetória na Nicopel em 2024, no Financeiro, e hoje tenho a oportunidade de atuar como Analista de Departamento Pessoal, em Recursos Humanos. Mais do que uma mudança de setor, essa experiência representa confiança, crescimento e a certeza de que, quando a empresa acredita no nosso potencial, podemos ir muito além do que imaginamos.',
+    tenure: 'Na Nicopel desde 2024',
+    status: 'confirmed',
+  },
+
   max: {
     id: 'max',
     name: 'Max',
-    role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
-    status: 'pending',
+    role: 'Supervisor Administrativo',
+    photo: '/collaborators/max.webp',
+    photoAlt: 'Max, supervisor administrativo da Nicopel Embalagens.',
+    quote:
+      'Comecei na Nicopel em 2023, como Analista de Faturamento. Hoje sou Supervisor Administrativo, atuando na gestão de processos, pessoas e resultados. Aprendi a ter uma visão mais ampla do negócio e desenvolvi habilidades de liderança, gestão e tomada de decisão.',
+    tenure: 'Na Nicopel desde 2023',
+    status: 'confirmed',
   },
-  lindomar: {
-    id: 'lindomar',
-    name: 'Lindomar',
-    role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
-    status: 'pending',
-  },
-  jennifer: {
-    id: 'jennifer',
-    name: 'Jennifer',
-    role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
-    status: 'pending',
-  },
+
   gustavo: {
     id: 'gustavo',
     name: 'Gustavo',
-    role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
-    status: 'pending',
+    role: 'Supervisor de P&D, Design e Pré-Impressão',
+    photo: '/collaborators/gustavo.webp',
+    photoAlt: 'Gustavo, supervisor de P&D, Design e Pré-Impressão da Nicopel Embalagens.',
+    // Frase que o próprio Gustavo destacou ao fim do depoimento.
+    quote:
+      'Iniciei em 2019 na área de Design Gráfico e hoje sou Supervisor de P&D, Design e Pré-Impressão. Na Nicopel, tive a oportunidade de crescer profissionalmente, ampliar minha visão sobre a produção gráfica e contribuir diretamente para a evolução dos processos e das tecnologias da empresa.',
+    tenure: 'Na Nicopel desde 2019',
+    status: 'confirmed',
   },
-  derciel: {
-    id: 'derciel',
-    name: 'Derciel',
-    role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
-    status: 'pending',
+
+  lindomar: {
+    id: 'lindomar',
+    name: 'Lindomar',
+    role: 'Líder Mecânico e Eletrônico',
+    photo: '/collaborators/lindomar.webp',
+    photoAlt: 'Lindomar, líder mecânico e eletrônico da Nicopel Embalagens.',
+    quote:
+      'Entrei como impressor offset há 11 anos. Fui um dos primeiros impressores certificados no SENAI e ensinei muitos impressores. Gosto de dar o meu melhor e estar sempre colaborando com a empresa. Hoje sou líder mecânico e eletrônico.',
+    tenure: '11 anos de Nicopel',
+    status: 'confirmed',
   },
+
   nicolas: {
     id: 'nicolas',
     name: 'Nicolas',
+    role: 'Líder do Setor de Acoplagem',
+    photo: '/collaborators/nicolas.webp',
+    photoAlt: 'Nicolas, líder do setor de acoplagem da Nicopel Embalagens.',
+    quote:
+      'Entrei na Nicopel em 2017, comecei no setor de embalagem, fazendo pacotes. Fui aprendendo nas máquinas, passei para operador de máquina e hoje sou líder do setor de acoplagem. Para mim foi importante o aprendizado nas máquinas, com as pessoas e como líder.',
+    tenure: 'Na Nicopel desde 2017',
+    status: 'confirmed',
+  },
+
+  // --- Pendentes: o depoimento chegou, o cargo exato não --------------------
+
+  alysson: {
+    id: 'alysson',
+    name: 'Alysson',
+    // PENDENTE: o depoimento diz "hoje faço parte do Comercial", sem o cargo
+    // exato. Preencher com o título que consta no RH e trocar o status.
     role: null,
-    photo: null,
-    photoAlt: null,
-    quote: null,
-    tenure: null,
+    photo: '/collaborators/alysson.webp',
+    photoAlt: 'Alysson, da área Comercial da Nicopel Embalagens.',
+    quote:
+      'Entrei na Nicopel em 2022, iniciando minha trajetória na área de Produção. Hoje faço parte do Comercial, e nesse período tive a oportunidade de adquirir novos conhecimentos, desenvolver minhas habilidades e crescer profissionalmente dentro da empresa.',
+    tenure: 'Na Nicopel desde 2022',
+    status: 'pending',
+  },
+
+  derciel: {
+    id: 'derciel',
+    name: 'Derciel',
+    // PENDENTE: o depoimento não menciona o setor nem o cargo.
+    role: null,
+    photo: '/collaborators/derciel.webp',
+    photoAlt: 'Derciel, colaborador da Nicopel Embalagens.',
+    quote:
+      'Entrei na Nicopel em outubro de 2023 e foi uma das maiores experiências, pois no começo tudo era muito novo ainda. Fui acompanhando a evolução da empresa durante esses quase 3 anos e sempre me senti em casa. Os colaboradores são competentes e dispostos a acreditar nos nossos objetivos, principalmente a diretoria, que sempre nos apoia desde as pequenas coisas. Sou muito grato por estar no Grupo Nicopel!',
+    tenure: 'Na Nicopel desde outubro de 2023',
     status: 'pending',
   },
 };
@@ -92,6 +121,9 @@ export const collaborators: Record<string, Collaborator> = {
  * Retorna o colaborador somente se ele estiver totalmente confirmado.
  * Qualquer campo essencial ausente devolve `null`, e o resultado cai no
  * placeholder — é isso que impede a exibição de conteúdo incompleto.
+ *
+ * A foto não entra nesta checagem de propósito: um card com nome, cargo e
+ * depoimento reais já vale, e a moldura cuida da ausência do arquivo.
  */
 export function getPublishableCollaborator(id: string | null): Collaborator | null {
   if (!id) return null;

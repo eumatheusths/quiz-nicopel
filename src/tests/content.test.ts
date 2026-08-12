@@ -60,13 +60,38 @@ describe('colaboradores', () => {
     expect(getPublishableCollaborator('nao-existe')).toBeNull();
   });
 
-  it('nenhum colaborador pendente tem depoimento ou cargo preenchido', () => {
-    // Guarda contra conteúdo inventado entrar por descuido em um card pendente.
+  it('colaborador pendente nunca tem cargo preenchido', () => {
+    // O cargo é o campo que se é tentado a deduzir. Depoimento pendente pode
+    // existir (a pessoa já contou a história); o cargo, não — ou veio do RH,
+    // ou fica nulo e o card cai no placeholder.
     for (const person of Object.values(collaborators)) {
       if (person.status === 'pending') {
-        expect(person.quote).toBeNull();
-        expect(person.role).toBeNull();
+        expect(person.role, `${person.id} pendente com cargo preenchido`).toBeNull();
+        expect(getPublishableCollaborator(person.id)).toBeNull();
       }
+    }
+  });
+
+  it('todo colaborador publicado tem cargo, depoimento e texto alternativo', () => {
+    for (const person of Object.values(collaborators)) {
+      if (person.status !== 'confirmed') continue;
+      expect(person.role?.length ?? 0, `${person.id} sem cargo`).toBeGreaterThan(3);
+      expect(person.quote?.length ?? 0, `${person.id} sem depoimento`).toBeGreaterThan(60);
+      expect(person.photoAlt?.length ?? 0, `${person.id} sem alt`).toBeGreaterThan(10);
+      expect(getPublishableCollaborator(person.id)).not.toBeNull();
+    }
+  });
+
+  it('nenhum resultado aponta para um colaborador não publicável', () => {
+    // Evita o caso silencioso: vínculo criado no resultado, mas a pessoa
+    // ainda pendente — o card cairia no placeholder sem ninguém perceber.
+    for (const roleId of ROLE_IDS) {
+      const result = results[roleId];
+      if (result.contentStatus !== 'confirmed') continue;
+      expect(
+        getPublishableCollaborator(result.collaboratorId),
+        `${roleId} marcado como confirmado mas sem colaborador publicável`,
+      ).not.toBeNull();
     }
   });
 
