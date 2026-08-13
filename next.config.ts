@@ -22,14 +22,16 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // O Next injeta scripts inline de hidratação; 'unsafe-inline' é necessário no App Router.
-      "script-src 'self' 'unsafe-inline'" +
+      // https://vercel.live liberado para uso da Toolbar da Vercel.
+      "script-src 'self' 'unsafe-inline' https://vercel.live" +
         (process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''),
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
-      "font-src 'self' data:",
-      "connect-src 'self'" + (process.env.NODE_ENV === 'development' ? ' ws:' : ''),
+      "font-src 'self' data: https://vercel.live",
+      "connect-src 'self' https://vercel.live" + (process.env.NODE_ENV === 'development' ? ' ws:' : ''),
       "form-action 'self'",
       "frame-ancestors 'none'",
+      "frame-src 'self' https://vercel.live",
       "base-uri 'self'",
       "object-src 'none'",
     ].join('; '),
@@ -42,19 +44,17 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    serverActions: {
-      /**
-       * O envio de currículo passa por uma Server Action, e o padrão do Next
-       * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
-       * nosso código, derrubando a página.
-       *
-       * 12 MB deixa folga para o arquivo (limitado a 10 MB na interface) mais os
-       * demais campos e o overhead do multipart, levando em consideração o teto
-       * do ambiente de hospedagem.
-       */
-      bodySizeLimit: '12mb',
-    },
+  serverActions: {
+    /**
+     * O envio de currículo passa por uma Server Action, e o padrão do Next
+     * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
+     * nosso código, derrubando a página.
+     *
+     * 12 MB deixa folga para o arquivo (limitado a 10 MB na interface) mais os
+     * demais campos e o overhead do multipart, levando em consideração o teto
+     * do ambiente de hospedagem.
+     */
+    bodySizeLimit: '12mb',
   },
   async headers() {
     return [
