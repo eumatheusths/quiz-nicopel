@@ -12,6 +12,18 @@ import { GROUP_IDS, ROLE_IDS, type GroupId, type RoleId } from '@/content/types'
 export const MIN_AGE = 14;
 export const MAX_AGE = 99;
 
+/**
+ * Tamanho máximo do currículo anexado.
+ *
+ * Precisa caber, com folga, dentro de dois tetos que não controlamos: o
+ * `bodySizeLimit` das Server Actions (4 MB, em next.config.ts) e os 4,5 MB que
+ * a Vercel aceita no corpo de uma função serverless. Estourar qualquer um dos
+ * dois devolve 500 antes do nosso código rodar, então a validação no cliente
+ * precisa barrar o envio ANTES da requisição sair.
+ */
+export const MAX_RESUME_BYTES = 3 * 1024 * 1024;
+export const MAX_RESUME_LABEL = '3 MB';
+
 /** Minúsculas e sem espaços nas pontas. Retorna `null` para vazio. */
 export function normalizeEmail(input: string | null | undefined): string | null {
   if (!input) return null;

@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { MAX_RESUME_BYTES, MAX_RESUME_LABEL } from '@/lib/validation';
 import { submitResume, type ResumeActionState } from './actions';
 
 /**
@@ -41,6 +42,29 @@ const labelClass = 'block text-sm font-semibold text-nicopel-ink';
 
 export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: ResumeFormProps) {
   const [state, formAction, isPending] = useActionState(submitResume, initialState);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Barra o arquivo grande demais no próprio navegador.
+   *
+   * Não é firula de UX: acima do `bodySizeLimit` a requisição é recusada pelo
+   * framework antes de chegar à action, e o retorno é um 500 que derruba a
+   * página inteira. A única forma de mostrar uma mensagem decente é não deixar
+   * o envio acontecer.
+   */
+  function checkFile(input: HTMLInputElement | null): boolean {
+    const file = input?.files?.[0];
+    if (!file || file.size <= MAX_RESUME_BYTES) {
+      setFileError(null);
+      return true;
+    }
+    const mb = (file.size / 1024 / 1024).toFixed(1).replace('.', ',');
+    setFileError(
+      `O arquivo tem ${mb} MB e o limite é ${MAX_RESUME_LABEL}. Envie um PDF mais leve ou deixe sem anexo — só o contato já vale.`,
+    );
+    return false;
+  }
 
   if (state.success) {
     return (
@@ -67,7 +91,16 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
 
   return (
     <div className="rounded-[var(--radius-card)] border border-nicopel-gray bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-      <form action={formAction} className="space-y-6">
+      <form
+        action={formAction}
+        onSubmit={(submitEvent) => {
+          if (!checkFile(fileRef.current)) {
+            submitEvent.preventDefault();
+            fileRef.current?.focus();
+          }
+        }}
+        className="space-y-6"
+      >
         {/* Cargo indicado pelo quiz, quando houver. */}
         {quizResultId && <input type="hidden" name="quizResult" value={quizResultId} />}
 
@@ -197,15 +230,31 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
             Anexar currículo (opcional)
           </label>
           <p className="mt-1 mb-3 text-xs text-nicopel-gray-text">
-            PDF, DOC ou DOCX, até 5 MB. Sem arquivo, guardamos seu contato do mesmo jeito.
+            PDF, DOC ou DOCX, até {MAX_RESUME_LABEL}. Sem arquivo, guardamos seu contato do mesmo jeito.
           </p>
           <input
+            ref={fileRef}
             type="file"
             id="cvFile"
             name="cvFile"
             accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="w-full cursor-pointer rounded-xl border-2 border-dashed border-nicopel-gray bg-white px-3 py-4 text-sm text-nicopel-gray-text file:mr-4 file:rounded-xl file:border-0 file:bg-nicopel-black file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-nicopel-ink"
+            onChange={(changeEvent) => checkFile(changeEvent.currentTarget)}
+            aria-invalid={fileError ? 'true' : undefined}
+            aria-describedby={fileError ? 'cvFile-error' : undefined}
+            className={`w-full cursor-pointer rounded-xl border-2 border-dashed bg-white px-3 py-4 text-sm text-nicopel-gray-text file:mr-4 file:rounded-xl file:border-0 file:bg-nicopel-black file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-nicopel-ink ${
+              fileError ? 'border-red-600' : 'border-nicopel-gray'
+            }`}
           />
+
+          {fileError && (
+            <p
+              id="cvFile-error"
+              role="alert"
+              className="mt-2 rounded-xl border-2 border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800"
+            >
+              {fileError}
+            </p>
+          )}
         </div>
 
         <p className="text-[11px] leading-relaxed text-nicopel-gray-text">
@@ -220,7 +269,7 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
           </Link>
         </p>
 
-        <Button type="submit" variant="inverse" size="lg" className="w-full" disabled={isPending}>
+        <Button type="submit" variant="inverse" size="lg" className="w-full" disabled={isPending || fileError !== null}>
           {isPending ? 'Enviando...' : 'Enviar currículo'}
         </Button>
       </form>

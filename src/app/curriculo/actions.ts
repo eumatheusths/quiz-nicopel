@@ -1,6 +1,7 @@
 'use server';
 
 import { ROLE_IDS, type RoleId } from '@/content/types';
+import { MAX_RESUME_BYTES, MAX_RESUME_LABEL } from '@/lib/validation';
 import { getDb } from '@/lib/db';
 import { resumes } from '@/lib/schema';
 
@@ -39,8 +40,8 @@ export async function submitResume(_prev: ResumeActionState, formData: FormData)
   let fileType = null;
 
   if (file && file.size > 0) {
-    if (file.size > 5 * 1024 * 1024) {
-      return { error: 'O arquivo não pode ser maior que 5MB.' };
+    if (file.size > MAX_RESUME_BYTES) {
+      return { error: `O arquivo não pode ser maior que ${MAX_RESUME_LABEL}.` };
     }
     const buffer = await file.arrayBuffer();
     fileBase64 = Buffer.from(buffer).toString('base64');

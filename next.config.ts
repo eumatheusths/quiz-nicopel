@@ -42,6 +42,20 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
+  experimental: {
+    serverActions: {
+      /**
+       * O envio de currículo passa por uma Server Action, e o padrão do Next
+       * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
+       * nosso código, derrubando a página.
+       *
+       * 4 MB deixa folga para o arquivo (limitado a 3 MB na interface) mais os
+       * demais campos e o overhead do multipart, e ainda fica abaixo do teto
+       * de 4,5 MB que a Vercel impõe ao corpo de uma função serverless.
+       */
+      bodySizeLimit: '4mb',
+    },
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },
