@@ -49,11 +49,11 @@ const nextConfig: NextConfig = {
        * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
        * nosso código, derrubando a página.
        *
-       * 4 MB deixa folga para o arquivo (limitado a 3 MB na interface) mais os
-       * demais campos e o overhead do multipart, e ainda fica abaixo do teto
-       * de 4,5 MB que a Vercel impõe ao corpo de uma função serverless.
+       * 12 MB deixa folga para o arquivo (limitado a 10 MB na interface) mais os
+       * demais campos e o overhead do multipart, levando em consideração o teto
+       * do ambiente de hospedagem.
        */
-      bodySizeLimit: '4mb',
+      bodySizeLimit: '12mb',
     },
   },
   async headers() {
