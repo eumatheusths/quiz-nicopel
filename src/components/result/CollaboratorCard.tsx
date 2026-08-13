@@ -41,7 +41,12 @@ export function CollaboratorCard({ collaboratorId }: { collaboratorId: string | 
       <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start">
         <PhotoFrame
           src={person.photo ?? ''}
+          // `scripts/prepare-collaborators.mjs` sempre gera o par .webp/.avif
+          // com o mesmo nome, então derivar o caminho evita repetir os dois.
+          avifSrc={person.photo?.replace(/\.webp$/, '.avif')}
           alt={person.photoAlt ?? `${person.name}, ${person.role}, na Nicopel Embalagens.`}
+          width={600}
+          height={800}
           placeholderLabel="Foto pendente"
           className="aspect-[3/4] w-28 shrink-0 sm:w-32"
         />

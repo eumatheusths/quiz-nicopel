@@ -16,6 +16,7 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "admin:hash": "tsx scripts/hash-password.ts",
     "docs:quiz": "tsx scripts/gerar-doc-perguntas.mts",
+    "assets:colaboradores": "node scripts/prepare-collaborators.mjs",
     "audit:quiz": "tsx scripts/audit-balance.mts && tsx scripts/audit-stability.mts",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },

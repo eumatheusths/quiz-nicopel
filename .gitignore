@@ -26,6 +26,9 @@ test-results/
 blob-report/
 .playwright/
 
+# originais pesados das fotos: entram pelo script de otimização
+assets-originais/
+
 # dados de participantes — nunca versionar
 exports/
 *.csv

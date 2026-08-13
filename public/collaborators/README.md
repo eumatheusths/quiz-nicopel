@@ -18,16 +18,17 @@ aparece sozinha no próximo carregamento.
 Enquanto o arquivo não existir, `PhotoFrame` mostra a composição gráfica de
 dobras de papel. Nada quebra: o card continua exibindo nome, cargo e depoimento.
 
-## Como preparar cada foto
+## Como adicionar ou trocar uma foto
 
-Retrato (3:4), rosto centralizado, mínimo 600 px de largura, WebP com qualidade
-80, até ~150 KB. Para converter a partir de um JPG/PNG:
+Os arquivos desta pasta são **gerados**. Não edite nem otimize à mão:
 
-```bash
-npx sharp-cli -i foto-original.jpg -o public/collaborators/michele.webp resize 600 800 --fit cover
-```
+1. Coloque o original em `assets-originais/collaborators/`, nomeado com o `id`
+   da pessoa (`michele.png`, `derciel.jpg`...). Maiúsculas não importam.
+2. Rode `npm run assets:colaboradores`.
 
-Ou use o script de assets do projeto como referência: `scripts/prepare-assets.mjs`.
+O script recorta em retrato 3:4 mantendo a cabeça no topo e gera o par
+`.webp` + `.avif` aqui. Os originais ficam fora do git — são ~1,7 MB cada e
+não precisam ser versionados nem servidos.
 
 ## Antes de publicar
 
