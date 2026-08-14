@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useRef, useState } from 'react';
+import { startTransition, useActionState, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { MAX_RESUME_BYTES, MAX_RESUME_LABEL } from '@/lib/validation';
@@ -43,15 +43,12 @@ const labelClass = 'block text-sm font-semibold text-nicopel-ink';
 export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: ResumeFormProps) {
   const [state, formAction, isPending] = useActionState(submitResume, initialState);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   /**
    * Barra o arquivo grande demais no próprio navegador.
-   *
-   * Não é firula de UX: acima do `bodySizeLimit` a requisição é recusada pelo
-   * framework antes de chegar à action, e o retorno é um 500 que derruba a
-   * página inteira. A única forma de mostrar uma mensagem decente é não deixar
-   * o envio acontecer.
    */
   function checkFile(input: HTMLInputElement | null): boolean {
     const file = input?.files?.[0];
@@ -64,6 +61,72 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
       `O arquivo tem ${mb} MB e o limite é ${MAX_RESUME_LABEL}. Envie um PDF mais leve ou deixe sem anexo — só o contato já vale.`,
     );
     return false;
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!checkFile(fileRef.current)) {
+      fileRef.current?.focus();
+      return;
+    }
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const file = fileRef.current?.files?.[0];
+
+    // Arquivos maiores que 2MB são enviados em chunks via API para contornar o limite de 4.5MB da Vercel
+    if (file && file.size > 2 * 1024 * 1024) {
+      setIsUploading(true);
+      setUploadStatus('Preparando envio...');
+      try {
+        const uploadId = crypto.randomUUID();
+        const chunkSize = 2.5 * 1024 * 1024; // Chunks de 2.5MB
+        const totalChunks = Math.ceil(file.size / chunkSize);
+
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(file.size, start + chunkSize);
+          const chunkBlob = file.slice(start, end);
+
+          setUploadStatus(`Enviando currículo (${i + 1}/${totalChunks})...`);
+
+          const arrayBuffer = await chunkBlob.arrayBuffer();
+          const chunkBase64 = Buffer.from(arrayBuffer).toString('base64');
+
+          const response = await fetch('/api/curriculo/upload-chunk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uploadId,
+              chunkIndex: i,
+              chunkBase64,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Falha ao enviar partes do arquivo.');
+          }
+        }
+
+        formData.delete('cvFile');
+        formData.set('uploadId', uploadId);
+        formData.set('fileName', file.name);
+        formData.set('fileType', file.type);
+      } catch (err) {
+        console.error(err);
+        setFileError('Erro ao enviar o arquivo de currículo. Tente novamente.');
+        setIsUploading(false);
+        setUploadStatus(null);
+        return;
+      }
+      setUploadStatus('Finalizando...');
+    }
+
+    startTransition(async () => {
+      await formAction(formData);
+      setIsUploading(false);
+      setUploadStatus(null);
+    });
   }
 
   if (state.success) {
@@ -91,16 +154,7 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
 
   return (
     <div className="rounded-[var(--radius-card)] border border-nicopel-gray bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
-      <form
-        action={formAction}
-        onSubmit={(submitEvent) => {
-          if (!checkFile(fileRef.current)) {
-            submitEvent.preventDefault();
-            fileRef.current?.focus();
-          }
-        }}
-        className="space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Cargo indicado pelo quiz, quando houver. */}
         {quizResultId && <input type="hidden" name="quizResult" value={quizResultId} />}
 
@@ -269,8 +323,16 @@ export function ResumeForm({ quizResultName, quizResultId, suggestedArea }: Resu
           </Link>
         </p>
 
-        <Button type="submit" variant="inverse" size="lg" className="w-full" disabled={isPending || fileError !== null}>
-          {isPending ? 'Enviando...' : 'Enviar currículo'}
+        <Button
+          type="submit"
+          variant="inverse"
+          size="lg"
+          className="w-full"
+          disabled={isPending || isUploading || fileError !== null}
+        >
+          {isPending || isUploading
+            ? uploadStatus || 'Enviando...'
+            : 'Enviar currículo'}
         </Button>
       </form>
     </div>

@@ -1,9 +1,10 @@
 'use server';
 
+import { eq, asc } from 'drizzle-orm';
 import { ROLE_IDS, type RoleId } from '@/content/types';
 import { MAX_RESUME_BYTES, MAX_RESUME_LABEL } from '@/lib/validation';
 import { getDb } from '@/lib/db';
-import { resumes } from '@/lib/schema';
+import { resumes, resumeChunks } from '@/lib/schema';
 
 export interface ResumeActionState {
   error?: string;
@@ -29,17 +30,36 @@ export async function submitResume(_prev: ResumeActionState, formData: FormData)
   const interests = formData.getAll('interests').map((i) => i.toString());
 
   // Cargo indicado pelo quiz, quando a pessoa veio pela página de resultado.
-  // Só aceitamos um id conhecido: o valor chega do cliente e não é confiável.
   const rawQuizResult = formData.get('quizResult')?.toString();
   const quizResult =
     rawQuizResult && ROLE_IDS.includes(rawQuizResult as RoleId) ? rawQuizResult : null;
 
-  const file = formData.get('cvFile') as File | null;
-  let fileBase64 = null;
-  let fileName = null;
-  let fileType = null;
+  let fileBase64: string | null = null;
+  let fileName: string | null = formData.get('fileName')?.toString() || null;
+  let fileType: string | null = formData.get('fileType')?.toString() || null;
 
-  if (file && file.size > 0) {
+  const uploadId = formData.get('uploadId')?.toString();
+  const file = formData.get('cvFile') as File | null;
+
+  if (uploadId) {
+    // Reúne os chunks enviados via API route para contornar limite do Vercel
+    try {
+      const chunks = await db
+        .select()
+        .from(resumeChunks)
+        .where(eq(resumeChunks.uploadId, uploadId))
+        .orderBy(asc(resumeChunks.chunkIndex));
+
+      if (chunks.length > 0) {
+        fileBase64 = chunks.map((c) => c.chunkBase64).join('');
+        // Limpa os chunks temporários do banco
+        await db.delete(resumeChunks).where(eq(resumeChunks.uploadId, uploadId));
+      }
+    } catch (err) {
+      console.error('Erro ao remontar chunks do currículo:', err);
+      return { error: 'Erro ao processar o arquivo anexado. Tente novamente.' };
+    }
+  } else if (file && file.size > 0) {
     if (file.size > MAX_RESUME_BYTES) {
       return { error: `O arquivo não pode ser maior que ${MAX_RESUME_LABEL}.` };
     }

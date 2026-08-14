@@ -105,3 +105,18 @@ export const resumes = pgTable('resumes', {
 
 export type Resume = typeof resumes.$inferSelect;
 export type NewResume = typeof resumes.$inferInsert;
+
+/**
+ * Chunks temporários para uploads em partes (suporta PDFs de até 10MB no Vercel).
+ */
+export const resumeChunks = pgTable('resume_chunks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  uploadId: text('upload_id').notNull(),
+  chunkIndex: integer('chunk_index').notNull(),
+  chunkBase64: text('chunk_base64').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ResumeChunk = typeof resumeChunks.$inferSelect;
+export type NewResumeChunk = typeof resumeChunks.$inferInsert;
+

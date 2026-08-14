@@ -44,17 +44,19 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
-  serverActions: {
-    /**
-     * O envio de currículo passa por uma Server Action, e o padrão do Next
-     * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
-     * nosso código, derrubando a página.
-     *
-     * 12 MB deixa folga para o arquivo (limitado a 10 MB na interface) mais os
-     * demais campos e o overhead do multipart, levando em consideração o teto
-     * do ambiente de hospedagem.
-     */
-    bodySizeLimit: '12mb',
+  experimental: {
+    serverActions: {
+      /**
+       * O envio de currículo passa por uma Server Action, e o padrão do Next
+       * é 1 MB — acima disso a requisição morre com 500 antes de chegar ao
+       * nosso código, derrubando a página.
+       *
+       * 12 MB deixa folga para o arquivo (limitado a 10 MB na interface) mais os
+       * demais campos e o overhead do multipart, levando em consideração o teto
+       * do ambiente de hospedagem.
+       */
+      bodySizeLimit: '12mb',
+    },
   },
   async headers() {
     return [
